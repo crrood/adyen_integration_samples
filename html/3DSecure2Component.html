@@ -63,21 +63,19 @@
 
 <script type="module">
 
+//////////////////////////////
+//		INITIALIZATION		//
+//////////////////////////////
+
 // custom utilities
 import * as common from "./../js/common.js";
 import Flowchart from "./../js/flowchart.js";
-import * as SDK from "./../js/custom3dsSDK.js";
-
-// constants
-const NOTIFICATION_URL = common.SUBMIT_URL + "?endpoint=threeds2_result_page";
-const CACHED_THREEDS_URL = "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml";
 
 // container for global variables
 const globals = {};
 
 // get everything ready to go
-initialize();
-function initialize() {
+window.onload = () => {
 
 	// Add submit button to DOM
 	const authoriseButton = document.createElement("button");
@@ -117,6 +115,10 @@ function initialize() {
 	});
 }
 
+//////////////////////////
+//		API METHODS		//
+//////////////////////////
+
 // send form data to server
 function submitForm() {
 
@@ -133,18 +135,18 @@ function submitForm() {
 
 	// build request framework
 	const request = {
-		"amount":{
-			"currency": "EUR",
-			"value": value
+		amount:{
+			currency: "EUR",
+			value: value
 		},
-		"reference": "Localhost 3ds2 basic component",
-		"threeDS2RequestData": {
-			"authenticationOnly": globals.authenticationOnly
+		reference: "Localhost 3ds2 basic component",
+		threeDS2RequestData: {
+			authenticationOnly: globals.authenticationOnly
 		},
-		"browserInfo": browserInfo,
+		browserInfo: browserInfo,
 		"channel" : "web",
 		"origin" : window.location.href,
-		"merchantAccount": ""  // filled in by server
+		merchantAccount: ""  // filled in by server
 	};
 
 	// payment instrument information
@@ -153,8 +155,8 @@ function submitForm() {
 	globals.contAuth = document.querySelector("#contAuthCheckbox").checked;
 	if (globals.contAuth) {
 		globals.paymentMethodData.paymentMethod = {
-			"type": "scheme",
-			"recurringDetailReference": "LATEST"
+			type: "scheme",
+			recurringDetailReference: "LATEST"
 		}
 
 		globals.paymentMethodData.shopperReference = "threeDS2";
@@ -163,12 +165,12 @@ function submitForm() {
 	}
 	else {
 		globals.paymentMethodData.paymentMethod = {
-			"type": "scheme",
-			"number": "4917610000000000",
-			"expiryMonth": "10",
-			"expiryYear": "2020",
-			"holderName": "John Smith",
-			"cvc": "737"
+			type: "scheme",
+			number: "4917610000000000",
+			expiryMonth: "10",
+			expiryYear: "2020",
+			holderName: "John Smith",
+			cvc: "737"
 		}
 	}
 	Object.assign(request, globals.paymentMethodData);
@@ -176,8 +178,8 @@ function submitForm() {
 	// add BIN / MID if necessary
 	if (globals.authenticationOnly) {
 		request.additionalData = {
-			"acquirerCode": "TestPmmAcquirer",
-			"authorisationMid": "1000"
+			acquirerCode: "TestPmmAcquirer",
+			authorisationMid: "1000"
 		}
 	}
 
@@ -257,8 +259,8 @@ function paymentsCallback(data) {
 // make a call to /payments/details
 function callPaymentsDetails(responseData) {
 	const request = {
-		"details": responseData.data.details,
-		"paymentData": globals.paymentData
+		details: responseData.data.details,
+		paymentData: globals.paymentData
 	};
 
 	request.endpoint = common.endpoints.paymentsDetails;
@@ -269,19 +271,19 @@ function callPaymentsDetails(responseData) {
 // authorise with raw MPI data
 function authoriseWithMPIData(threeDS2Result) {
 	const request = {
-		"amount":{
-			"currency":"EUR",
-			"value":1000
+		amount:{
+			currency:"EUR",
+			value:1000
 		},
-		"merchantAccount":"", 
-		"reference":"Localhost 3ds2 with MPI data",
-		"mpiData":{  
-			"cavv": threeDS2Result.authenticationValue,
-			"eci": threeDS2Result.eci,
-			"dsTransId": threeDS2Result.dsTransID,
-			"directoryResponse": globals.challengePerformed ? "C" : "Y",
-			"authenticationResponse": threeDS2Result.transStatus,
-			"threeDSVersion": threeDS2Result.messageVersion
+		merchantAccount:"", 
+		reference:"Localhost 3ds2 with MPI data",
+		mpiData:{  
+			cavv: threeDS2Result.authenticationValue,
+			eci: threeDS2Result.eci,
+			dsTransId: threeDS2Result.dsTransID,
+			directoryResponse: globals.challengePerformed ? "C" : "Y",
+			authenticationResponse: threeDS2Result.transStatus,
+			threeDSVersion: threeDS2Result.messageVersion
 		}
 	};
 	Object.assign(request, globals.paymentMethodData);
@@ -289,6 +291,10 @@ function authoriseWithMPIData(threeDS2Result) {
 
 	common.AJAXPost(common.SERVER_URL, paymentsCallback, request);
 }
+
+//////////////////////////////
+//		CLIENT METHODS		//
+//////////////////////////////
 
 function doFingerprint(fingerprintToken) {
 	globals.checkout

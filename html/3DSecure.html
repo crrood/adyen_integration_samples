@@ -68,31 +68,35 @@ import Flowchart from "./../js/flowchart.js";
 // container for global variables
 const globals = {};
 
-// add dynamic flowchart
-let tree = [
-	"First /payments Call",
-	[
-		"Not Enrolled",
-		"3D Secure",
+// initialize page
+window.onload = () => {
+
+	// add dynamic flowchart
+	let tree = [
+		"First /payments Call",
 		[
-			"Authorisation",
-			"Retrieve MPI Data"
+			"Not Enrolled",
+			"3D Secure",
+			[
+				"Authorisation",
+				"Retrieve MPI Data"
+			]
 		]
-	]
-];
-globals.flowchart = new Flowchart(tree, document.querySelector("#flowchart"));
+	];
+	globals.flowchart = new Flowchart(tree, document.querySelector("#flowchart"));
 
-// Add submit button to DOM
-const authoriseButton = document.createElement("button");
-authoriseButton.onclick = initialAuthorise;
-authoriseButton.innerHTML = "Authorise";
-authoriseButton.id = "authoriseBtn";
-document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
+	// Add submit button to DOM
+	const authoriseButton = document.createElement("button");
+	authoriseButton.onclick = initialAuthorise;
+	authoriseButton.innerHTML = "Authorise";
+	authoriseButton.id = "authoriseBtn";
+	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
 
-// disable frictionless flow if 3ds2 isn't checked
-document.querySelector("#threeds2inMDFlowCheckbox").addEventListener("click",
-	e => document.querySelector("#frictionlessCheckbox").disabled = !e.target.checked
-);
+	// disable frictionless flow if 3ds2 isn't checked
+	document.querySelector("#threeds2inMDFlowCheckbox").addEventListener("click",
+		e => document.querySelector("#frictionlessCheckbox").disabled = !e.target.checked
+	);
+}
 
 // Start the transaction
 function initialAuthorise() {
@@ -128,7 +132,7 @@ function initialAuthorise() {
 		},
 		browserInfo: common.collectBrowserInfo(),
 		merchantAccount: "",  // filled in by server from config.ini
-		returnUrl: "http://localhost:8000/cgi-bin/threeDSNotification.py",
+		returnUrl: common.THREE_DS_NOTIFICATION_URL,
 		origin: "http://localhost:8000",
 		additionalData: {
 			executeThreeD: "true",

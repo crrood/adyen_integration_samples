@@ -5,6 +5,7 @@ export const JSON_ENCODED_HEADER = { "Content-Type": "application/json" };
 export const SERVER_URL = "http://localhost:8000/cgi-bin/server.py";
 export const SUBMIT_URL = "http://localhost:8000/cgi-bin/submit.py";
 export const RETURN_URL = SUBMIT_URL + "/?endpoint=result_page";
+export const THREE_DS_NOTIFICATION_URL = "http://localhost:8000/cgi-bin/threeDSNotification.py";
 
 const CHECKOUT_VERSION = "v49";
 const PAL_VERSION = "v49";
