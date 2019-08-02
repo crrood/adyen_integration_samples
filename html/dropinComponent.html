@@ -1,0 +1,185 @@
+<html>
+
+<head>
+	<script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.js"></script>
+	<link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.css"/>
+	<link rel="stylesheet" type="text/css" href="../css/style.css"></link>
+	<title>Drop-in Component</title>
+</head>
+
+<body>
+
+	<div class="left-column">
+		<h2>Network activity</h2>
+		<div id="output"></div>
+	</div>
+
+	<div class="right-column">
+		<h3>Payment info</h3>
+		<div class="block">
+			<form id="paymentForm" class="client-form" >
+				Currency: <input type="text" id="currencyInput" name="currency" value="USD"/><br>
+				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US"/><br>
+				ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB"/><br>
+				<button id="checkoutBtn" class="block">Initialize</button>
+			</form>
+		</div>
+
+		<div id="componentHolder" class=""></div>
+		<div id="redirectIframe"></div>
+		<br>
+		<button id="payBtn" class="hidden" disabled=true>Pay</button>
+	</div>
+
+</body>
+
+<script type="module">
+
+import * as common from "./../js/common.js";
+
+const globals = {};
+
+globals.componentInitializerOutput = `const sharedConfiguration = {
+    locale: document.querySelector("[name=shopperLocale]").value,
+    originKey: ORIGIN_KEY,
+    environment: "test",
+    paymentMethodsResponse: data.response
+};
+
+// intialize checkout object
+const checkout = new AdyenCheckout(sharedConfiguration);`;
+
+// actions to do on page load
+window.onload = function() {
+
+	// event listener for initialize button
+	document.getElementById("checkoutBtn").addEventListener("click", getAvailablePaymentMethods);
+};
+
+// get data from form and make call to paymentMethods
+function getAvailablePaymentMethods(e) {
+	e.preventDefault();
+
+	common.hide("#paymentForm");
+
+	const request = {
+		currency: document.querySelector("#currencyInput").value,
+		shopperLocale: document.querySelector("#shopperLocaleInput").value,
+		countryCode: document.querySelector("#countryCodeInput").value,
+		merchantAccount: "" // filled in by server
+	};
+	request.endpoint = common.endpoints.paymentMethods;
+
+	common.AJAXPost(
+		common.SERVER_URL,
+		handlePaymentMethodsCallback,
+		request
+	);
+}
+
+// display available components
+function handlePaymentMethodsCallback(data) {
+
+	common.output(data.request, "/paymentMethods request", data.endpoint);
+	common.output(data.response, "/paymentMethods response");
+
+	// config options shared between components
+	const sharedConfiguration = {
+	    locale: document.querySelector("[name=shopperLocale]").value,
+	    originKey: common.ORIGIN_KEY,
+	    environment: "test",
+	    paymentMethodsResponse: data.response
+	};
+
+	// intialize checkout object
+	const checkout = new AdyenCheckout(sharedConfiguration);
+
+	common.output(globals.componentInitializerOutput, "Initialize Dropin Component");
+
+	// initialize dropin component
+	globals.dropin = checkout.create("dropin", {
+		paymentMethodsConfiguration: {
+
+		},
+		onSubmit: onSubmit,
+		onAdditionalDetails: onAdditionalDetails
+	})
+	.mount("#componentHolder");
+}
+
+function onSubmit(state, dropin) {
+	console.log("onSubmit");
+	console.log(state);
+	console.log(dropin);
+
+	sendPayment(state.data);
+}
+
+function onAdditionalDetails(state, dropin) {
+	console.log("onAdditionalDetails");
+	console.log(state);
+	console.log(dropin);
+
+	common.output(state, "onAdditionalDetails callback");
+
+	callPaymentsDetails(state.data);
+}
+
+// send payment info to Adyen
+function sendPayment(stateData) {
+	const formData = common.getJSONFromFormData("#paymentForm");
+	const request = {
+		"merchantAccount":"",
+		"reference":"Localhost drop-in component",
+		"amount":{
+			"currency": formData.currency,
+			"value": formData.value
+		},
+		"paymentMethod": stateData.paymentMethod,
+		"returnUrl": common.RETURN_URL,
+		"browserInfo": {
+		    "screenWidth": 2560,
+		    "colorDepth": 24,
+		    "language": "en-US",
+		    "javaEnabled": false,
+		    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
+		    "acceptHeader": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		    "screenHeight": 1440,
+		    "timeZoneOffset": 420
+		},
+		"additionalData": {
+		    "allow3DS2": true
+		},
+    	"origin": window.location.origin,
+    	"channel": "web"
+	};
+	request.endpoint = common.endpoints.payments;
+
+	common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
+}
+
+// display result of call to Adyen
+function handlePaymentsCallback(data) {
+	common.output(data.request, "/payments request", data.endpoint);
+	common.output(data.response, "/payments response");
+
+	// handle follow up actions
+	if (data.response.hasOwnProperty("action")) {
+		globals.dropin.handleAction(data.response.action);
+	}
+	else if (data.response.resultCode === "Authorised" || data.response.resultCode === "Refused") {
+		globals.dropin.unmount();
+		document.querySelector("#componentHolder").textContent = data.response.resultCode;
+	}
+}
+
+function callPaymentsDetails(data) {
+	const request = {
+		...data,
+		endpoint: common.endpoints.paymentsDetails
+	};
+
+	common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
+}
+
+</script>

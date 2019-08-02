@@ -1,0 +1,165 @@
+<html>
+
+<head>
+	<script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.js"></script>
+	<link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/2.1.0/adyen.css" />
+	<link rel="stylesheet" type="text/css" href="../css/style.css"></link>
+	<title>Components</title>
+</head>
+
+<body>
+
+	<div class="left-column">
+		<h2>Network activity</h2>
+		<div id="output"></div>
+	</div>
+
+	<div class="right-column">
+		<h3>Payment info</h3>
+		<div class="block">
+			<form id="paymentForm" class="client-form" >
+				Currency: <input type="text" id="currencyInput" name="currency" value="EUR"/><br>
+				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="NL"/><br>
+				ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB"/><br>
+				<button id="checkoutBtn" class="block">Initialize</button>
+			</form>
+		</div>
+
+		<div id="componentHolder" class="component display-none"></div>
+		<br>
+		<button id="payBtn" class="hidden" disabled=true>Pay</button>
+	</div>
+
+</body>
+
+<script type="module">
+
+import * as common from "./../js/common.js";
+
+const globals = {};
+
+// actions to do on page load
+window.onload = function() {
+
+	// event listener for initialize button
+	document.getElementById("checkoutBtn").addEventListener("click", getAvailablePaymentMethods);
+
+	globals.payBtn = document.querySelector("#payBtn");
+	globals.payBtn.onclick = sendPayment;
+};
+
+// get data from form and make call to paymentMethods
+function getAvailablePaymentMethods(e) {
+	e.preventDefault();
+
+	common.hide("#paymentForm");
+
+	const request = {
+		currency: document.querySelector("#currencyInput").value,
+		shopperLocale: document.querySelector("#shopperLocaleInput").value,
+		countryCode: document.querySelector("#countryCodeInput").value,
+		merchantAccount: "" // filled in by server
+	};
+	request.endpoint = common.endpoints.paymentMethods;
+
+	common.AJAXPost(
+		common.SERVER_URL,
+		handlePaymentMethodsCallback,
+		request
+	);
+}
+
+// display available components
+function handlePaymentMethodsCallback(data) {
+
+	common.output(data.request, "/paymentMethods request", data.endpoint);
+	common.output(data.response, "/paymentMethods response");
+
+	// config options shared between components
+	const sharedConfiguration = {
+	    locale: document.querySelector("[name=shopperLocale]").value,
+	    originKey: common.ORIGIN_KEY,
+	    loadingContext: "https://checkoutshopper-test.adyen.com/checkoutshopper/",
+	    environment: "test"
+	};
+
+	// show disabled pay button
+	globals.payBtn.classList.remove("hidden");
+
+	// show components
+	common.unhide("#componentHolder");
+
+	// intialize checkout object
+	const checkout = new AdyenCheckout(sharedConfiguration);
+
+	// iterate through returned payment methods
+	// and render components where available
+	for (let pm of data.response.paymentMethods) {
+		
+		console.log("adding component for " + pm.type);
+		let pmType = pm.type;
+
+		// special case for cards
+		if (pmType === "scheme") {
+			pmType = "card";
+		}
+
+		// methods which don't have a component yet will throw an error
+		const componentDiv = document.createElement("div");
+		try {
+
+			// create new div for each component
+			componentDiv.innerHTML = pmType + "<hr>";
+			componentDiv.classList.add("component");
+			componentDiv.id = "component--" + pmType;
+			document.querySelector("#componentHolder").appendChild(componentDiv);
+
+			// initialize component
+			checkout.create(pmType, {
+				onChange: handleStateChange,
+				details: pm.details,
+			}).mount("#" + componentDiv.id);
+
+		}
+		catch(e) {
+			componentDiv.remove();
+			console.log(e.message);
+		}
+	}
+}
+
+// handle changes in component state
+function handleStateChange(state, component) {
+	globals.payBtn.disabled = !state.isValid;
+
+	globals.activePaymentInfo = state.data;
+
+	if (state.isValid) {
+		common.output(globals.activePaymentInfo, "onChange callback");
+	}
+}
+
+// send payment info to Adyen
+function sendPayment() {
+	const formData = common.getJSONFromFormData("#paymentForm");
+	const request = {
+		"merchantAccount":"",
+		"reference":"Localhost components",
+		"amount":{
+			"currency": formData.currency,
+			"value": formData.value
+		},
+		...globals.activePaymentInfo
+	};
+	request.endpoint = common.endpoints.payments;
+
+	common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
+}
+
+// display result of call to Adyen
+function handlePaymentsCallback(data) {
+	common.output(data.request, "/payments request", data.endpoint);
+	common.output(data.response, "/payments response");
+}
+
+</script>

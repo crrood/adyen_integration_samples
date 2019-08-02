@@ -1,0 +1,392 @@
+<html>
+
+<head>
+	<title>3DS 2.0</title>
+	<link rel="stylesheet" type="text/css" href="../css/style.css"/>
+	<link rel="stylesheet" type="text/css" href="../css/flowchart.css"/>
+</head>
+
+<body>
+	<div class="left-column">
+		<h2>Network activity</h2>
+		<div id="output"></div>
+	</div>
+	
+	<div class="right-column fixed">
+		<div class="flowchart-container">
+			<figure class="flowchart">
+				<ul id="flowchart" class="tree"></ul>
+			</figure>
+			<div class="flowchart-legend center-content">
+				<div>
+					<label>Current state</label>
+					<span class="flowchart-color-swatch active-state-legend"></span>
+				</div>
+				<div>
+					<label>Previous state</label>
+					<span class="flowchart-color-swatch previous-state-legend"></span>
+				</div>
+				<div>
+					<label>Unreachable state</label>
+					<span class="flowchart-color-swatch unreachable-state-legend"></span>
+				</div>
+			</div>
+		</div>
+
+		<div class="center-content">
+			<div class="checkout-holder">
+				<span>
+					<form>
+						<input class="formEls" type="hidden" name="holderName" value="Theresa Cure"></input>
+						<input class="formEls" type="hidden" name="number" value="4111111111111111"></input>
+						<input class="formEls" type="hidden" name="expiryYear" value="2020"></input>
+						<input class="formEls" type="hidden" name="expiryMonth" value="10"></input>
+						<input class="formEls" type="hidden" name="cvc" value="737"></input>
+						<input class="formEls" type="hidden" name="value" value="1499" id="valueInput"></input>
+						<input class="formEls" type="hidden" name="currency" value="EUR"></input>
+						<input class="formEls" type="hidden" name="reference" value="Localhost 3DS 2.0"></input>
+						<input class="formEls" type="hidden" name="endpoint" value="threeds2_adv_initial_auth"></input>
+						<input class="formEls" type="hidden" name="userAgent" value="browser"></input>
+					</form>
+				</span>
+				<div class="client-form">
+					<div>
+						<input type="checkbox" id="frictionlessCheckbox"/>
+						<label for="frictionlessCheckbox">Frictionless</label>
+					</div>
+					<div>
+						<input id="adyenTokenAuth" type="radio" name="transactionTypeRadio" value="adyenTokenAuth">
+						<label for="adyenTokenAuth">Adyen Token Auth</label><br>
+						<input id="acquirerAgnosticAuth" type="radio" checked="checked" name="transactionTypeRadio" value="acquirerAgnosticAuth">
+						<label for="acquirerAgnosticAuth">Acquirer Agnostic Auth</label>
+					</div>
+					<div id="authoriseBtnHolder"></div>
+				</div>
+			</div>
+
+			<div id="sdkContainer" class="hidden challenge-iframe center-content"></div>
+		</div>
+	</div>
+
+</body>
+
+</html>
+
+<script type="module">
+
+import * as common from "./../js/common.js";
+import Flowchart from "./../js/flowchart.js";
+import * as SDK from "./../js/custom3dsSDK.js";
+
+const NOTIFICATION_URL = common.SUBMIT_URL + "?endpoint=threeds2_result_page";
+const CACHED_THREEDS_URL = "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml";
+
+const globals = {};
+
+// get everything ready to go
+initialize();
+function initialize() {
+
+	// Add submit button to DOM
+	const authoriseButton = document.createElement("button");
+	authoriseButton.onclick = submitForm;
+	authoriseButton.innerHTML = "Authorise";
+	authoriseButton.disabled = true;
+	authoriseButton.id = "authoriseBtn";
+	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
+	
+	// add dynamic flowchart
+	let tree = [
+		"Get3dsAvailability",
+		[
+			"Fingerprint Device", 
+			[
+				"Initial Authorise",
+				[
+					"Frictionless",
+					"Challenge Shopper", 
+					[
+						"Challenge Successful", 
+						[
+							"Authorise With Token",
+							"Retrieve MPI Data", 
+							[
+								"Authorise Via Adyen",
+								"Authorise Elsewhere"
+							],
+						],
+						"Challenge Failed", 
+						[
+							"Retry Validation",
+							"Authorise Unauthenticated"
+						]
+					]
+				]
+			]
+		]
+	];
+
+	globals.flowchart = new Flowchart(tree, document.querySelector("#flowchart"));
+
+	// pretend we have cached data on the card
+	common.output('"threeDS2Version": "2.1.0"<br>"threeDSMethodURL": "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml"', "Query cached 3ds2 data");
+}
+
+// perform fingerprint via SDK on page load
+fingerprintDevice();
+function fingerprintDevice() {
+	// generate transID
+	globals.threeDSServerTransID = common.uuid();
+
+	// give the cached (hardcoded) data to the SDK
+	const fingerprintParams = {
+		"threeDSServerTransID": globals.threeDSServerTransID,
+		"threeDSMethodURL": CACHED_THREEDS_URL, 
+		"YOUR_NOTIFICATION_ENDPOINT": NOTIFICATION_URL, 
+		'CONTAINER': document.querySelector("#sdkContainer")
+	};
+	const fingerprintPromise = SDK.getFingerprint(...Object.values(fingerprintParams));
+
+	common.output(fingerprintParams, "Fingerprint request to SDK", "SDK.getFingerprint");
+
+	// handle SDK promise callbacks
+	fingerprintPromise.then((successfulPromiseResponse) => {
+		common.output(successfulPromiseResponse, "Fingerprint response from SDK", "SDK.getFingerprint");
+		globals.fingerprintResponse = successfulPromiseResponse;
+		
+		// enable authorise button
+		document.querySelector("#authoriseBtn").disabled = false;
+
+	}, (failedPromiseResponse) => {
+		common.output("Verification request to SDK failed - check log for more details", "Fingerprint response from SDK");
+		console.log("Verification request to SDK failed:");
+		console.log(failedPromiseResponse);
+	});
+
+	globals.flowchart.setActive("FingerprintDevice");
+}
+
+// send form data to server
+function submitForm(e) {
+
+	let jsonData = {}; // JSON object for logging
+
+	// hide checkout form
+	document.querySelector(".checkout-holder").classList.add("display-none");
+	
+	// handle frictionless checkbox
+	if (document.querySelector("#frictionlessCheckbox").checked) {
+		document.querySelector("#valueInput").value = 12002;
+	}
+
+	// form encode data and add to jsonData
+	let url = common.buildFormURL();
+	globals.authenticationOnly = document.querySelector('input[name="transactionTypeRadio"]:checked').value == "acquirerAgnosticAuth";
+	url = url + "&authenticationOnly=" + globals.authenticationOnly;
+
+	// send to server
+	initialAuthoriseCall(url, jsonData);
+
+	// block default form behavior
+	return false;
+}
+
+// called by successful return of promise from SDK.doChallenge
+// form encodes data and sends to server
+function initialAuthoriseCall(url, jsonData) {
+	url = url + "&threeDSCompInd=" + globals.fingerprintResponse.threeDSCompInd + "&threeDSServerTransID=" + globals.threeDSServerTransID;
+	jsonData.threeDSCompInd = globals.fingerprintResponse.threeDSCompInd;
+	jsonData.threeDSServerTransID = globals.threeDSServerTransID;
+
+	globals.flowchart.setActive("InitialAuthorise");
+
+	common.AJAXGet(url, initialAuthoriseCallback);
+}
+
+// receive response from initialAuthoriseCall
+function initialAuthoriseCallback(data) {
+	// parse and output request / response
+	const request = data.request;
+	const response = data.response;
+
+	common.output(request, "Request from server to Adyen", "https://pal-test.adyen.com/pal/servlet/Payment/v40/authorise");
+	common.output(response, "Response from Adyen to server");
+
+	if (response.resultCode === "ChallengeShopper") {
+		// put all of the required 3DS 2.0 data into the global namespace
+		globals.cReqData = {
+			threeDSServerTransID : response.additionalData['threeds2.threeDS2ResponseData.threeDSServerTransID'],
+			acsTransID : response.additionalData['threeds2.threeDS2ResponseData.acsTransID'],
+			messageVersion : response.additionalData['threeds2.threeDS2ResponseData.messageVersion'],
+			messageType : 'CReq',
+			challengeWindowSize: '04'
+		};
+		globals.acsURL = response.additionalData["threeds2.threeDS2ResponseData.acsURL"].replace(/\\/g, "");
+
+		// save token and pspReference for later
+		globals.threeDS2Token = response.additionalData["threeds2.threeDS2Token"].replace(/\\/g, "");
+		globals.challengePspReference = response.pspReference;
+
+		// common.output formatted token in case we want to finish the transaction manually
+		console.log("threeDSToken:");
+		console.log(globals.threeDS2Token);
+
+		// execute the challenge via the SDK
+		doChallenge();
+	}
+	else if (response.resultCode === "AuthenticationFinished" || response.resultCode === "Authorised") {
+		// authentication is complete - we can stop here!
+		globals.flowchart.setActive("Frictionless");
+	}
+}
+
+// perform challenge via SDK
+function doChallenge() {
+	// config data for SDK to execute challenge
+	const iframeConfig = {
+		size: '01', // The size you'd like the iframe to be can be '01' - '05' as documented
+		container: document.querySelector("#sdkContainer") // Container to place the generated iframe into OR an actual iframe
+	};
+
+	common.output("acsURL: " + globals.acsURL + "<br>iframeConfig: " + JSON.stringify(iframeConfig, null, 4) + "<br>cReqData: " + JSON.stringify(globals.cReqData, null, 4), "Challenge request to SDK", "SDK.doChallenge");
+	globals.flowchart.setActive("ChallengeShopper");
+
+	// create the iframe for the promise
+	SDK.doChallenge(globals.acsURL, globals.cReqData, iframeConfig, NOTIFICATION_URL).then(
+		handleSuccessfulSDKChallengePromise, 
+		handleFailedSDKChallengePromise);
+
+	// show challenge iframe
+	document.querySelector("#sdkContainer").classList.remove("hidden");
+}
+
+// doChallenge successful resolution
+function handleSuccessfulSDKChallengePromise(successfulPromiseResponse) {
+	common.output("threeDSServerTransID=" + successfulPromiseResponse.threeDSServerTransID + "<br>transStatus=" + successfulPromiseResponse.transStatus, "Challenge succeeded");
+
+	// remove challenge iframe
+	common.hide("#sdkContainer");
+
+	// update flowchart
+	globals.flowchart.setActive("ChallengeSuccessful");
+
+	// handle next step in process
+	if (globals.authenticationOnly) {
+		retrieve3ds2Result();
+	}
+	else {
+		adyenTokenAuth(successfulPromiseResponse.transStatus);
+	}
+}
+
+// doChallenge failed resolution
+function handleFailedSDKChallengePromise(failedPromiseResponse) {
+	common.output(failedPromiseResponse, "Challenge failed");
+	console.log(failedPromiseResponse);
+
+	// remove challenge iframe
+	common.hide("#sdkContainer");
+
+	// update flowchart
+	globals.flowchart.setActive("ChallengeFailed");
+}
+
+// retrieve cavv and eci values
+// to potentially send to another acquirer
+function retrieve3ds2Result() {
+	let url = common.SUBMIT_URL + "?endpoint=threeds2_adv_retrieve3ds2Result" + "&pspReference=" + globals.challengePspReference;
+	common.AJAXGet(url, acquirerAgnosticAuth);
+}
+
+// send auth request using cavv and eci values
+function acquirerAgnosticAuth(data) {
+	const request = data.request;
+	const response = data.response;
+
+	common.output(request, "Request from server to Adyen", "https://pal-test.adyen.com/pal/servlet/Payment/v40/retrieve3ds2Result");
+	common.output(response, "Response from Adyen to server");
+	globals.flowchart.setActive("RetrieveMPIData");
+
+	let url = common.SUBMIT_URL + "?endpoint=threeds2_adv_acquirerAgnosticAuth" + "&eci=";
+}
+
+// send authorise3ds2 call with stored token
+function adyenTokenAuth(transStatus) {
+	let url = common.SUBMIT_URL + "?endpoint=threeds2_auth_via_token" + "&threeDS2Token=" + encodeURIComponent(globals.threeDS2Token) + "&transStatus=" + transStatus;
+	common.AJAXGet(url, adyenTokenAuthCallback);
+}
+
+// get response from authorise3ds2 call
+function adyenTokenAuthCallback(data) {
+	const request = data.request;
+	const response = data.response;
+
+	common.output(request, "Request from server to Adyen", "https://pal-test.adyen.com/pal/servlet/Payment/v40/authorise3ds2");
+	common.output(response, "Response from Adyen to server");
+	globals.flowchart.setActive("AuthoriseWithToken");
+}
+
+//////////////////////////////////
+//		FLOWCHART METHODS		//
+//////////////////////////////////
+
+// automated tree generator
+function generateTreeHTML(inputObject) {
+	let result = "";
+	for (let child in inputObject) {
+		if (typeof(inputObject[child]) === "object") {
+			// node has children
+			result = result + "<ul>" + generateTreeHTML(inputObject[child]) + "</ul>";
+		}
+		else {
+			// node is a label
+			result = result + "<li><code id=" + inputObject[child].replace(/ /g, "") + ">" + inputObject[child] + "</code>";
+		}
+	}
+	return result;
+}
+
+// scale the flowchart to fit on screen at lower resolutions
+function scaleFlowchart() {
+	const FLOWCHART_MIN_WIDTH = 750;
+	const availableFlowchartWidth = window.innerWidth / 2;
+	if (availableFlowchartWidth < FLOWCHART_MIN_WIDTH) {
+		const el = document.querySelector(".flowchart");
+		const scale = availableFlowchartWidth / FLOWCHART_MIN_WIDTH;
+		const percentScaleX = "-" + (100 - (scale * 110)).toString() + "%";
+		const percentScaleY = "-" + (100 - (scale * 120)).toString() + "%";
+
+		el.style.webkitTransform = `scale(${scale}) translate(${percentScaleX}, ${percentScaleY})`;
+		el.style.height = (globals.originalFlowchartHeight * scale) + "px";
+	}
+	else {
+		document.querySelector(".flowchart").style.webkitTransform = "";
+	}
+}
+
+//////////////////////////////
+//		UTILITY METHODS		//
+//////////////////////////////
+
+// gets state of auth flow radio buttons
+function getSelectedAuthFlow() {
+	return document.querySelector('input[name="transactionTypeRadio"]:checked').value;
+}
+
+// check location of challenge iframe
+function checkIfChallengeIsCompleted() {
+	try {
+		return (document.querySelector("[name=threeDSIframe]").contentWindow.location.href == NOTIFICATION_URL);
+	}
+	catch(error) {
+		// will return CORS error if challenge hasn't been completed yet
+		return false;
+	}
+}
+
+// returned when the challenge completes and redirects to result page
+function getCRESFromIframe() {
+	return document.querySelector("[name=threeDSIframe]").contentDocument.querySelector("pre").innerHTML.trim();
+}
+
+</script>

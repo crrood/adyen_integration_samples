@@ -1,0 +1,140 @@
+/* It's supposed to look like a tree diagram */
+/* unashamedly stolen from https://codepen.io/ross-angus/pen/jwxMjL */
+
+figure.flowchart {
+    margin: 5px;
+    padding-right: 10px;
+}
+
+.flowchart-container {
+    padding-bottom: 20px;
+}
+
+/* legend */
+.flowchart-legend {
+    margin-top: -30px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flowchart-legend * {
+    display: inline-block;
+}
+
+.flowchart-legend span {
+    transform: translate(0, 2px);
+    top: 100px;
+    left: 100px;
+    width: 30px;
+    height: 15px;
+}
+
+.flowchart-legend .active-state-legend {
+    background-color: #A3B474;
+}
+
+.flowchart-legend .previous-state-legend {
+    background-color: #9BAED2;
+}
+
+.flowchart-legend .unreachable-state-legend {
+    background-color: #E1B1A5;
+}
+
+/* node highlighting */
+code.active-state {
+    background-color: #A3B474;
+    color: #222;
+    font-weight: bold;
+}
+
+code.previous-state {
+    background-color: #9BAED2;
+    color: #222;
+    font-weight: bold;
+}
+
+code.unreachable-state {
+    background-color: #E1B1A5;
+    color: #555;
+}
+
+/* tree structure */
+.tree, .tree ul, .tree li {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.tree {
+    margin: 0 0 1em;
+    text-align: center;
+    user-select: none;
+}
+.tree, .tree ul {
+    display: table;
+}
+.tree ul {
+  width: 100%;
+}
+    .tree li {
+        display: table-cell;
+        padding: .5em 0;
+        vertical-align: top;
+    }
+        /* _________ */
+        .tree li:before {
+            outline: solid 1px #555;
+            content: "";
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        .tree li:first-child:before {left: 50%;}
+        .tree li:last-child:before {right: 50%;}
+
+        .tree code, .tree span {
+            border: solid .1em #555;
+            border-radius: .2em;
+            display: inline-block;
+            margin: 0 .2em .5em;
+            padding: .2em .5em;
+            position: relative;
+        }
+        /* If the tree represents DOM structure */
+        .tree code {
+            font-family:  'Lucida Console', monospace;
+            font-size: 15px;
+            font-weight: lighter;
+        }
+
+            /* | */
+            .tree ul:before,
+            .tree code:before,
+            .tree span:before {
+                outline: solid 1px #555;
+                content: "";
+                height: .5em;
+                left: 50%;
+                position: absolute;
+            }
+            .tree ul:before {
+                top: -.5em;
+            }
+            .tree code:before,
+            .tree span:before {
+                top: -.55em;
+            }
+
+/* The root node doesn't connect upwards */
+.tree > li {margin-top: 0;}
+    .tree > li:before,
+    .tree > li:after,
+    .tree > li > code:before,
+    .tree > li > span:before {
+      outline: none;
+    }
