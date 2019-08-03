@@ -6,11 +6,16 @@
 	</head>
 	<body>
 		<div class="left-column">
+
+			<!-- network activity is displayed here -->
 			<h2>Network activity</h2>
 			<div id="output"></div>
+
 		</div>
 		
 		<div class="right-column fixed center-content">
+
+			<!-- flowchart for displaying transaction state -->
 			<div class="flowchart-container">
 				<figure class="flowchart" style="padding-left: 33%">
 					<ul id="flowchart" class="tree"></ul>
@@ -31,8 +36,10 @@
 				</div>
 			</div>
 
+			<!-- the challenge will be displayed here -->
 			<iframe class="threeDSIframe display-none" id="threeDSIframe"></iframe>
 
+			<!-- options for different testing scenarios -->
 			<div class="center-content">
 				<div class="checkout-holder">
 					<div class="client-form">
@@ -62,6 +69,11 @@
 
 <script type="module">
 
+//////////////////////////////
+//		INITIALIZATION		//
+//////////////////////////////
+
+// shared utilities
 import * as common from "./../js/common.js";
 import Flowchart from "./../js/flowchart.js";
 
@@ -85,9 +97,9 @@ window.onload = () => {
 	];
 	globals.flowchart = new Flowchart(tree, document.querySelector("#flowchart"));
 
-	// Add submit button to DOM
+	// add submit button to DOM
 	const authoriseButton = document.createElement("button");
-	authoriseButton.onclick = initialAuthorise;
+	authoriseButton.onclick = initialPaymentsRequest;
 	authoriseButton.innerHTML = "Authorise";
 	authoriseButton.id = "authoriseBtn";
 	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
@@ -98,10 +110,15 @@ window.onload = () => {
 	);
 }
 
-// Start the transaction
-function initialAuthorise() {
+//////////////////////////
+//		API METHODS		//
+//////////////////////////
+
+// start the transaction
+function initialPaymentsRequest() {
 	globals.authenticationOnly = document.querySelector("#standaloneCheckbox").checked
 
+	// update flowchart
 	globals.flowchart.setActive("First/paymentsCall")
 
 	// hide checkout form
@@ -142,14 +159,14 @@ function initialAuthorise() {
 
 	// send to server
 	request.endpoint = common.endpoints.payments;
-	common.AJAXPost(common.SERVER_URL, initialAuthoriseCallback, request);
+	common.AJAXPost(common.SERVER_URL, initialPaymentsResponse, request);
 
 	// prevent default button behavior
 	return false;
 }
 
-
-function initialAuthoriseCallback(data) {
+// handles response from /payments call
+function initialPaymentsResponse(data) {
 	// output to page
 	common.output(data.request, "Initial /payments call to Adyen", data.endpoint);
 	common.output(data.response, "Response to initial /payments call to Adyen");
@@ -164,13 +181,13 @@ function initialAuthoriseCallback(data) {
 		let redirectData = data.response.redirect.data;
 		globals.paymentData = data.response.paymentData;
 
-		// because the redirect has to be done as a POST...
+		// because the redirect has to be done as a POST
 		// create an HTML form and redirect the user
 		let form = document.createElement("form");
 		form.setAttribute("method", "POST");
 		form.setAttribute("action", issuerURL);
 
-		// iteract through redirect params
+		// add params from response to form
 		for (let param in redirectData) {
 			let input = document.createElement("input");
 			input.setAttribute("type", "hidden");
@@ -181,12 +198,20 @@ function initialAuthoriseCallback(data) {
 		}
 
 		// request and display challenge in iframe
+		// by submitting the form we just created
 		common.unhide("#threeDSIframe");
 		document.querySelector("#threeDSIframe").contentWindow.document.documentElement.appendChild(form);
 		form.submit();
 
+		// update flowchart
 		globals.flowchart.setActive("3DSecure");
 
+		// see cgi-bin/threeDSNotification.py
+		// for details of how the server sends a postmessage back to the client
+		// 
+		// other options would be:
+		// polling the iframe via JS
+		// websocket connection
 		window.addEventListener("message", handlePostMessage);
 	}
 }
@@ -207,6 +232,7 @@ function handlePostMessage(e) {
 	}
 	*/
 
+	// fall back to /authorise3d endpoint
 	const request = {
 		md: e.data.MD[0],
 		paResponse: e.data.PaRes[0],

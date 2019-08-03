@@ -1,15 +1,16 @@
-// constants
+// request headers
 export const FORM_ENCODED_HEADER = { "Content-Type": "application/x-www-form-urlencoded" };
 export const JSON_ENCODED_HEADER = { "Content-Type": "application/json" };
 
+// local server URLs
 export const SERVER_URL = "http://localhost:8000/cgi-bin/server.py";
-export const SUBMIT_URL = "http://localhost:8000/cgi-bin/submit.py";
-export const RETURN_URL = SUBMIT_URL + "/?endpoint=result_page";
 export const THREE_DS_NOTIFICATION_URL = "http://localhost:8000/cgi-bin/threeDSNotification.py";
 
+// API versions
 const CHECKOUT_VERSION = "v49";
 const PAL_VERSION = "v49";
 
+// Adyen endpoints
 export const endpoints = {
 	"paymentMethods": "https://checkout-test.adyen.com/" + CHECKOUT_VERSION + "/paymentMethods",
 	"paymentsDetails": "https://checkout-test.adyen.com/" + CHECKOUT_VERSION + "/payments/details",
@@ -19,7 +20,7 @@ export const endpoints = {
 	"authorise3ds2": "https://pal-test.adyen.com/pal/servlet/Payment/" + PAL_VERSION + "/authorise3ds2"
 };
 
-// wrapper to send requests to server
+// method to send AJAX POST requests
 export function AJAXPost(path, callback, params = {}, headers = JSON_ENCODED_HEADER) {
 
 	// build request
@@ -50,6 +51,7 @@ export function AJAXPost(path, callback, params = {}, headers = JSON_ENCODED_HEA
 	request.send(params);
 }
 
+// method to send AJAX GET requests
 export function AJAXGet(path, callback) {
 	let request = new XMLHttpRequest();
 	request.open("GET", path, true);
@@ -65,34 +67,6 @@ export function AJAXGet(path, callback) {
 	};
 
 	request.send();
-}
-
-// pulls values from HTML form and encodes into JSON object
-export function getJSONFromFormData(querySelector) {
-	const result = {};
-	for (let el of document.querySelector(querySelector).elements) {
-		result[el.name] = el.value;
-	}
-	return result;
-}
-
-// pulls parameters from HTML form and builds a url with GET params
-// accepts an optional JSON object of parameters to add
-export function buildFormURL(customParams = null) {
-	let inputParams = document.querySelectorAll("input[type='text'], input[type='hidden']");
-
-	// Get request details from html form
-	let formString = "";
-	for (let param of inputParams) {
-		formString = formString + param.name + "=" + param.value + "&";
-	}
-
-	// Add custom parameters from function call
-	for (let key in customParams) {
-		formString = formString + key + "=" + customParams[key] + "&";
-	}
-
-	return encodeURI(SUBMIT_URL + "?" + formString);
 }
 
 // utility to output to web page
@@ -184,7 +158,8 @@ export function output(text, title = null, subtitle = null, indentation = 4) {
 	document.querySelector("#output").append(containerEl);
 }
 
-// apply the hidden class to an object
+// add the hidden class to an object
+// applies "display: none" CSS
 export function hide(querySelector) {
 	document.querySelector(querySelector).classList.add("display-none");
 }
@@ -194,17 +169,21 @@ export function unhide(querySelector) {
 	document.querySelector(querySelector).classList.remove("display-none");
 }
 
-// this shouldn't be necessary.. I must be building the response wrong somehow
-export function sanitizeJSON(data) {
-	return JSON.parse(data.replace(/'/g, '"').replace(/"\{/g, "{").replace(/\}"/g, "}"));
-}
-
-// generate UUID for 3DS2 advanced flow
+// generate UUID for 3DS2 prefetch flow
 export function uuid() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
+}
+
+// pulls values from HTML form and encodes into JSON object
+export function getJSONFromFormData(querySelector) {
+	const result = {};
+	for (let el of document.querySelector(querySelector).elements) {
+		result[el.name] = el.value;
+	}
+	return result;
 }
 
 // generate browserInfo object
