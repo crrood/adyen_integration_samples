@@ -1,3 +1,7 @@
+// change this to your own value
+// https://docs.adyen.com/user-management/how-to-get-an-origin-key
+export const ORIGIN_KEY = "pub.v2.8115054323780109.aHR0cDovL2xvY2FsaG9zdDo4MDAw.B92basPQjzeM7_TtJ2IKZoln780QtvwAiPFDEbKs7Ng";
+
 // request headers
 export const FORM_ENCODED_HEADER = { "Content-Type": "application/x-www-form-urlencoded" };
 export const JSON_ENCODED_HEADER = { "Content-Type": "application/json" };

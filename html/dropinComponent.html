@@ -19,6 +19,7 @@
 		<div class="block">
 			<form id="paymentForm" class="client-form" >
 				Currency: <input type="text" id="currencyInput" name="currency" value="USD"/><br>
+				Amount: <input type="text" id="valueInput" name="value" value="1000"/><br>
 				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US"/><br>
 				ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB"/><br>
 				<button id="checkoutBtn" class="block">Initialize</button>
@@ -61,9 +62,10 @@ function getAvailablePaymentMethods(e) {
 	e.preventDefault();
 
 	common.hide("#paymentForm");
+	globals.currency = document.querySelector("#currencyInput").value;
 
 	const request = {
-		currency: document.querySelector("#currencyInput").value,
+		currency: globals.currency,
 		shopperLocale: document.querySelector("#shopperLocaleInput").value,
 		countryCode: document.querySelector("#countryCodeInput").value,
 		merchantAccount: "" // filled in by server
@@ -98,9 +100,7 @@ function handlePaymentMethodsCallback(data) {
 
 	// initialize dropin component
 	globals.dropin = checkout.create("dropin", {
-		paymentMethodsConfiguration: {
-
-		},
+		paymentMethodsConfiguration: {},
 		onSubmit: onSubmit,
 		onAdditionalDetails: onAdditionalDetails
 	})

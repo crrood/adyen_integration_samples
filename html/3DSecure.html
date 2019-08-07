@@ -222,15 +222,13 @@ function handlePostMessage(e) {
 	common.output(e.data, "Data in redirect from issuer");
 
 	// /payments/details doesn't work with authenticationOnly currently
-	/*
-	const request = {
-		paymentData: globals.paymentData,
-		details: {
-			MD: e.data.MD[0],
-			PaRes: e.data.PaRes[0]
-		}
-	}
-	*/
+	// const request = {
+	// 	paymentData: globals.paymentData,
+	// 	details: {
+	// 		MD: e.data.MD[0],
+	// 		PaRes: e.data.PaRes[0]
+	// 	}
+	// }
 
 	// fall back to /authorise3d endpoint
 	const request = {
@@ -240,9 +238,7 @@ function handlePostMessage(e) {
 	}
 
 	if (globals.authenticationOnly) {
-		request.threeDS2RequestData = {
-			authenticationOnly: "true"
-		}
+		request.threeDSAuthenticationOnly = true
 	}
 
 	// request.endpoint = common.endpoints.paymentsDetails;
