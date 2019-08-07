@@ -152,7 +152,6 @@ function initialPaymentsRequest() {
 		returnUrl: common.THREE_DS_NOTIFICATION_URL,
 		origin: "http://localhost:8000",
 		additionalData: {
-			executeThreeD: "true",
 			threeDS2InMDFlow: document.querySelector("#threeds2inMDFlowCheckbox").checked.toString()
 		}
 	}
