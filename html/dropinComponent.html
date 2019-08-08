@@ -27,7 +27,6 @@
 		</div>
 
 		<div id="componentHolder" class=""></div>
-		<div id="redirectIframe"></div>
 		<br>
 		<button id="payBtn" class="hidden" disabled=true>Pay</button>
 	</div>
@@ -36,10 +35,13 @@
 
 <script type="module">
 
-import * as common from "./../js/common.js";
+// js utilities
+import * as common from "../js/common.js";
 
+// object to store global variables
 const globals = {};
 
+// for logging
 globals.componentInitializerOutput = `const sharedConfiguration = {
     locale: document.querySelector("[name=shopperLocale]").value,
     originKey: ORIGIN_KEY,
@@ -64,6 +66,7 @@ function getAvailablePaymentMethods(e) {
 	common.hide("#paymentForm");
 	globals.currency = document.querySelector("#currencyInput").value;
 
+	// build /paymentMethods request
 	const request = {
 		currency: globals.currency,
 		shopperLocale: document.querySelector("#shopperLocaleInput").value,
@@ -72,6 +75,7 @@ function getAvailablePaymentMethods(e) {
 	};
 	request.endpoint = common.endpoints.paymentMethods;
 
+	// send to Adyen test server
 	common.AJAXPost(
 		common.SERVER_URL,
 		handlePaymentMethodsCallback,
@@ -107,6 +111,7 @@ function handlePaymentMethodsCallback(data) {
 	.mount("#componentHolder");
 }
 
+// callback from component
 function onSubmit(state, dropin) {
 	console.log("onSubmit");
 	console.log(state);
@@ -115,6 +120,8 @@ function onSubmit(state, dropin) {
 	sendPayment(state.data);
 }
 
+// callback from component
+// called after handleAction is completed
 function onAdditionalDetails(state, dropin) {
 	console.log("onAdditionalDetails");
 	console.log(state);
@@ -165,6 +172,7 @@ function handlePaymentsCallback(data) {
 
 	// handle follow up actions
 	if (data.response.hasOwnProperty("action")) {
+		common.output("globals.dropin.handleAction(data.response.action);", "Handling action from API response");
 		globals.dropin.handleAction(data.response.action);
 	}
 	else if (data.response.resultCode === "Authorised" || data.response.resultCode === "Refused") {
@@ -173,6 +181,7 @@ function handlePaymentsCallback(data) {
 	}
 }
 
+// call Adyen /payments/details endpoint
 function callPaymentsDetails(data) {
 	const request = {
 		...data,
