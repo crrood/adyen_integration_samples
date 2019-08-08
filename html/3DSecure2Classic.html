@@ -59,6 +59,10 @@
 						<input type="checkbox" id="standaloneCheckbox"/>
 						<label for="standaloneCheckbox">Standalone</label>
 					</div>
+					<div class="block">
+						<input type="text" id="cardNumberInput" value="4917610000000000"/>
+						<label for="cardNumberInput">Card number:</label>
+					</div>
 					<div id="authoriseBtnHolder"></div>
 				</div>
 			</div>
@@ -73,9 +77,9 @@
 
 <script type="module">
 
-import * as common from "./../js/common.js";
-import Flowchart from "./../js/flowchart.js";
-import * as SDK from "./../js/custom3dsSDK.js";
+import * as common from "../js/common.js";
+import Flowchart from "../js/flowchart.js";
+import * as SDK from "../js/custom3dsSDK.js";
 
 const CACHED_THREEDS_URL = "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml";
 

@@ -12,6 +12,10 @@ body.dark {
 	color: #D3D3D3;
 }
 
+::selection {
+	background: #9FDBB7;
+}
+
 .block {
 	display: block;
 }

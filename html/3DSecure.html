@@ -59,6 +59,10 @@
 							<input type="checkbox" id="notEnrolledCheckbox"/>
 							<label for="notEnrolledCheckbox">Not enrolled</label>
 						</div>
+						<div class="block">
+							<input type="text" id="cardNumberInput" value="4917610000000000"/>
+							<label for="cardNumberInput">Card number:</label>
+						</div>
 						<div id="authoriseBtnHolder"></div>
 					</div>
 				</div>
@@ -74,8 +78,8 @@
 //////////////////////////////
 
 // shared utilities
-import * as common from "./../js/common.js";
-import Flowchart from "./../js/flowchart.js";
+import * as common from "../js/common.js";
+import Flowchart from "../js/flowchart.js";
 
 // container for global variables
 const globals = {};
@@ -128,7 +132,7 @@ function initialPaymentsRequest() {
 	const requestAmount = document.querySelector("#frictionlessCheckbox").checked ? 12002 : 1000;
 
 	// not enrolled
-	const cardNumber = document.querySelector("#notEnrolledCheckbox").checked ? "4199350000000002" : "4917610000000000";
+	const cardNumber = document.querySelector("#notEnrolledCheckbox").checked ? "4199350000000002" : document.querySelector("#cardNumberInput").value;
 
 	// server request
 	const request = {

@@ -49,6 +49,10 @@
 						<input type="checkbox" id="contAuthCheckbox"/>
 						<label for="contAuthCheckbox">ContAuth</label>
 					</div>
+					<div class="block">
+						<input type="text" id="cardNumberInput" value="4917610000000000"/>
+						<label for="cardNumberInput">Card number:</label>
+					</div>
 					<div id="authoriseBtnHolder"></div>
 				</div>
 			</div>
@@ -68,8 +72,8 @@
 //////////////////////////////
 
 // custom utilities
-import * as common from "./../js/common.js";
-import Flowchart from "./../js/flowchart.js";
+import * as common from "../js/common.js";
+import Flowchart from "../js/flowchart.js";
 
 // container for global variables
 const globals = {};
@@ -166,7 +170,7 @@ function submitForm() {
 	else {
 		globals.paymentMethodData.paymentMethod = {
 			type: "scheme",
-			number: "4917610000000000",
+			number: document.querySelector("#cardNumberInput").value,
 			expiryMonth: "10",
 			expiryYear: "2020",
 			holderName: "John Smith",
