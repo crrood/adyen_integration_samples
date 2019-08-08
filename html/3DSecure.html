@@ -56,10 +56,6 @@
 							<label for="standaloneCheckbox">Standalone</label>
 						</div>
 						<div class="block">
-							<input type="checkbox" id="notEnrolledCheckbox"/>
-							<label for="notEnrolledCheckbox">Not enrolled</label>
-						</div>
-						<div class="block">
 							<input type="text" id="cardNumberInput" value="4917610000000000"/>
 							<label for="cardNumberInput">Card number:</label>
 						</div>
@@ -131,9 +127,6 @@ function initialPaymentsRequest() {
 	// frictionless
 	const requestAmount = document.querySelector("#frictionlessCheckbox").checked ? 12002 : 1000;
 
-	// not enrolled
-	const cardNumber = document.querySelector("#notEnrolledCheckbox").checked ? "4199350000000002" : document.querySelector("#cardNumberInput").value;
-
 	// server request
 	const request = {
 		reference: "Localhost 3DS 1",
@@ -141,11 +134,19 @@ function initialPaymentsRequest() {
 		channel: "web",
 		paymentMethod: {
 			holderName: "Test Shopper",
-			number: cardNumber,
+			number: document.querySelector("#cardNumberInput").value,
 			type: "scheme",
 			expiryMonth: "10",
 			expiryYear: "2020",
 			cvc: "737"
+		},
+		billingAddress: {
+			country: "US",
+			city: "Brooklyn",
+			street: "N/A",
+			houseNumberOrName: "836 Bedford Avenue",
+			stateOrProvince: "NY",
+			postalCode: "11205"
 		},
 		amount: {
 			value: requestAmount,

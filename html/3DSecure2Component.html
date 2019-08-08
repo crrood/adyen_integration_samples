@@ -147,6 +147,14 @@ function submitForm() {
 		threeDS2RequestData: {
 			authenticationOnly: globals.authenticationOnly
 		},
+		billingAddress: {
+			country: "US",
+			city: "Brooklyn",
+			street: "N/A",
+			houseNumberOrName: "836 Bedford Avenue",
+			stateOrProvince: "NY",
+			postalCode: "11205"
+		},
 		browserInfo: browserInfo,
 		channel: "web",
 		origin: window.location.href,
@@ -264,7 +272,8 @@ function paymentsCallback(data) {
 function callPaymentsDetails(responseData) {
 	const request = {
 		details: responseData.data.details,
-		paymentData: globals.paymentData
+		paymentData: globals.paymentData,
+		threeDSAuthenticationOnly: globals.authenticationOnly
 	};
 
 	request.endpoint = common.endpoints.paymentsDetails;
