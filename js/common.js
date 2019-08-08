@@ -9,6 +9,7 @@ export const JSON_ENCODED_HEADER = { "Content-Type": "application/json" };
 // local server URLs
 export const SERVER_URL = "http://localhost:8000/cgi-bin/server.py";
 export const THREE_DS_NOTIFICATION_URL = "http://localhost:8000/cgi-bin/threeDSNotification.py";
+export const RETURN_URL = "http://localhost:8000/cgi-bin/returnUrl.py";
 
 // API versions
 const CHECKOUT_VERSION = "v49";

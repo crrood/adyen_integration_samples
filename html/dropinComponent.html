@@ -129,29 +129,29 @@ function onAdditionalDetails(state, dropin) {
 function sendPayment(stateData) {
 	const formData = common.getJSONFromFormData("#paymentForm");
 	const request = {
-		"merchantAccount":"",
-		"reference":"Localhost drop-in component",
-		"amount":{
-			"currency": formData.currency,
-			"value": formData.value
+		merchantAccount: "",
+		reference: "Localhost drop-in component",
+		amount:{
+			currency: formData.currency,
+			value: formData.value
 		},
-		"paymentMethod": stateData.paymentMethod,
-		"returnUrl": common.RETURN_URL,
-		"browserInfo": {
-		    "screenWidth": 2560,
-		    "colorDepth": 24,
-		    "language": "en-US",
-		    "javaEnabled": false,
-		    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
-		    "acceptHeader": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-		    "screenHeight": 1440,
-		    "timeZoneOffset": 420
+		paymentMethod: stateData.paymentMethod,
+		returnUrl: common.RETURN_URL,
+		browserInfo: {
+		    screenWidth: 2560,
+		    colorDepth: 24,
+		    language: "en-US",
+		    javaEnabled: false,
+		    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
+		    acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+		    screenHeight: 1440,
+		    timeZoneOffset: 420
 		},
-		"additionalData": {
-		    "allow3DS2": true
+		additionalData: {
+		    allow3DS2: true
 		},
-    	"origin": window.location.origin,
-    	"channel": "web"
+    	origin: window.location.origin,
+    	channel: "web"
 	};
 	request.endpoint = common.endpoints.payments;
 
