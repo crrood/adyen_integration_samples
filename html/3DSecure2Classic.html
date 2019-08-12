@@ -7,7 +7,6 @@
 </head>
 
 <body>
-	<h1 style="border: 5px dashed red; width: 500px;">CURRENTLY BROKEN<br>SORRY FOLKS</h1>
 	<div class="left-column">
 		<h2>Network activity</h2>
 		<div id="output"></div>
@@ -36,20 +35,6 @@
 
 		<div class="center-content">
 			<div class="checkout-holder">
-				<span>
-					<form>
-						<input class="formEls" type="hidden" name="holderName" value="Theresa Cure"></input>
-						<input class="formEls" type="hidden" name="number" value="4917610000000000"></input>
-						<input class="formEls" type="hidden" name="expiryYear" value="2020"></input>
-						<input class="formEls" type="hidden" name="expiryMonth" value="10"></input>
-						<input class="formEls" type="hidden" name="cvc" value="737"></input>
-						<input class="formEls" type="hidden" name="value" value="1499" id="valueInput"></input>
-						<input class="formEls" type="hidden" name="currency" value="EUR"></input>
-						<input class="formEls" type="hidden" name="reference" value="Localhost 3DS 2.0"></input>
-						<input class="formEls" type="hidden" name="endpoint" value="threeds2_part1"></input>
-						<input class="formEls" type="hidden" name="userAgent" value="browser"></input>
-					</form>
-				</span>
 				<div class="client-form">
 					<div class="block">
 						<input type="checkbox" id="frictionlessCheckbox"/>
@@ -77,21 +62,24 @@
 
 <script type="module">
 
+//////////////////////////////
+//		INITIALIZATION		//
+//////////////////////////////
+
+// JS utilities
 import * as common from "../js/common.js";
 import Flowchart from "../js/flowchart.js";
-import * as SDK from "../js/custom3dsSDK.js";
+import * as HelperMethods from "../js/3DSHelperMethods.js";
 
-const CACHED_THREEDS_URL = "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml";
-
+// shared variables
 const globals = {};
 
 // get everything ready to go
-initialize();
-function initialize() {
+window.onload = () => {
 
 	// Add submit button to DOM
 	const authoriseButton = document.createElement("button");
-	authoriseButton.onclick = submitForm;
+	authoriseButton.onclick = initialAuthoriseCall;
 	authoriseButton.innerHTML = "Authorise";
 	authoriseButton.id = "authoriseBtn";
 	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
@@ -120,35 +108,85 @@ function initialize() {
 	globals.flowchart = new Flowchart(tree, document.querySelector("#flowchart"));
 }
 
-// send form data to server
-function submitForm(e) {
+//////////////////////////
+//		API METHODS		//
+//////////////////////////
 
-	let jsonData = {}; // JSON object for logging
+// send form data to server
+function initialAuthoriseCall() {
+
+	// JSON object for logging
+	let jsonData = {};
 
 	// hide checkout form
 	document.querySelector(".checkout-holder").classList.add("display-none");
 	
 	// handle frictionless checkbox
+	let value = 1000;
 	if (document.querySelector("#frictionlessCheckbox").checked) {
-		document.querySelector("#valueInput").value = 12002;
+		value = 12002;
 	}
 
-	// form encode data and add to jsonData
-	let url = common.buildFormURL();
+	// standalone mode
 	globals.authenticationOnly = document.querySelector("#standaloneCheckbox").checked;
-	url = url + "&authenticationOnly=" + globals.authenticationOnly;
 
-	// send to server
-	common.AJAXGet(url, initialAuthoriseCallback);
+	// build API request
+	const request = {
+		amount:{
+			currency: "EUR",
+			value: value
+		},
+		card: {
+			number: document.querySelector("#cardNumberInput").value,
+			expiryMonth: "10",
+			expiryYear: "2020",
+			holderName: "John Smith",
+			cvc: "737"
+		},
+		reference: "Localhost 3ds2 Classic API",
+		// TODO
+		// change this to the top level field once it's supported
+		// threeDSAuthenticationOnly: globals.authenticationOnly,
+		threeDS2RequestData: {
+			deviceChannel: "browser",
+			notificationURL: common.RETURN_URL,
+			authenticationOnly: globals.authenticationOnly
+		},
+		billingAddress: {
+			country: "US",
+			city: "Brooklyn",
+			street: "N/A",
+			houseNumberOrName: "836 Bedford Avenue",
+			stateOrProvince: "NY",
+			postalCode: "11205"
+		},
+		browserInfo: common.collectBrowserInfo(),
+		origin: window.location.href,
+		merchantAccount: ""  // filled in by server
+	};
 
+	// add BIN / MID if using authenticationOnly flow
+	if (globals.authenticationOnly) {
+		request.additionalData = {
+			acquirerCode: "TestPmmAcquirer",
+			authorisationMid: "1000"
+		}
+	}
+
+	// update flowchart state
 	globals.flowchart.setActive("InitialAuthorise");
 
-	// block default form behavior
+	// send to server
+	request.endpoint = common.endpoints.authorise;
+	common.AJAXPost(common.SERVER_URL, authoriseCallback, request);
+
+	// block default form redirect
 	return false;
 }
 
-// receive response from initialAuthoriseCall
-function initialAuthoriseCallback(data) {
+// handle response from initialAuthoriseCall
+function authoriseCallback(data) {
+
 	// parse and output request / response
 	const request = data.request;
 	const response = data.response;
@@ -157,17 +195,12 @@ function initialAuthoriseCallback(data) {
 	common.output(response, "Response from Adyen to server");
 
 	if (response.resultCode === "IdentifyShopper") {
-		// save required data for later
-		globals.threeDSServerTransID = response.additionalData['threeds2.threeDS2ResponseData.threeDSServerTransID'];
-		globals.threeDS2Token = response.additionalData["threeds2.threeDS2Token"].replace(/\\/g, "");
-		globals.initialAuthorisePSPReference = response.pspReference;
-
-		// output formatted token in case we want to finish the transaction manually
-		console.log("threeDSToken:");
-		console.log(globals.threeDS2Token);
-
-		// execute the fingerprint via the SDK
-		fingerprintDevice(response.additionalData["threeds2.threeDSMethodURL"]);
+		// perform device fingerprint (DDC)
+		identifyShopper(response);
+	}
+	else if (response.resultCode === "ChallengeShopper") {
+		// render shopper challenge
+		challengeShopper(response);
 	}
 	else if (response.resultCode === "AuthenticationFinished" || response.resultCode === "Authorised") {
 		// authentication is complete - we can stop here!
@@ -175,181 +208,150 @@ function initialAuthoriseCallback(data) {
 	}
 }
 
-// perform fingerprint via custom SDK
-function fingerprintDevice(threeDSMethodURL) {
-	// generate transID
-	globals.threeDSServerTransID = common.uuid();
+// call /authorise3ds2 with the result of the fingerprint / challenge
+function callAuthorise3ds2(threeDS2Data) {
+	const request = {
+		merchantAccount: "", // filled in by server
+		threeDS2Token: globals.threeDS2Token,
+		...threeDS2Data
+	}
 
-	// give the fingerprint data to the SDK
+	request.endpoint = common.endpoints.authorise3ds2;
+
+	common.AJAXPost(common.SERVER_URL, authorise3ds2Callback, request);
+}
+
+// handle results from authorise3ds2
+function authorise3ds2Callback(data) {
+	const response = common.parseServerResponse(data);
+
+	// build logic based on resultCode
+	if (response.resultCode === "ChallengeShopper") {
+
+		// render shopper challenge
+		challengeShopper(response);
+	}
+	else if (response.resultCode === "AuthenticationFinished" || response.resultCode === "Authorised") {
+
+		// authentication is complete - we can stop here!
+		globals.flowchart.setActive("Frictionless");
+	}
+}
+
+// perform fingerprint via custom helper methods
+function identifyShopper(response) {
+
+	// save required data for later
+	globals.threeDSServerTransID = response.additionalData['threeds2.threeDSServerTransID'];
+	globals.threeDS2Token = response.additionalData["threeds2.threeDS2Token"].replace(/\\/g, "");
+	globals.initialAuthorisePSPReference = response.pspReference;
+
+	// execute the fingerprint via the helper methods
+	const threeDSMethodURL = response.additionalData["threeds2.threeDSMethodURL"];
+
+	// give the fingerprint data to the helper methods
 	const fingerprintParams = {
-		"threeDSServerTransID": globals.threeDSServerTransID,
-		"threeDSMethodURL": threeDSMethodURL, 
-		"YOUR_NOTIFICATION_ENDPOINT": THREE_DS_NOTIFICATION_URL,
-		'CONTAINER': document.querySelector("#sdkContainer")
+		threeDSServerTransID: globals.threeDSServerTransID,
+		threeDSMethodURL: threeDSMethodURL,
+		YOUR_NOTIFICATION_ENDPOINT: common.SEND_POST_MESSAGE,
+		CONTAINER: document.querySelector("#sdkContainer")
 	};
-	const fingerprintPromise = SDK.getFingerprint(...Object.values(fingerprintParams));
 
-	common.output(fingerprintParams, "Fingerprint request to SDK", "SDK.getFingerprint");
+	common.output(fingerprintParams, "Fingerprint request to helper methods", "HelperMethods.getFingerprint");
 
-	// handle SDK promise callbacks
-	fingerprintPromise.then((successfulPromiseResponse) => {
-		common.output(successfulPromiseResponse, "Fingerprint response from SDK", "SDK.getFingerprint");
+	// handle helper methods promise resolution
+	HelperMethods.getFingerprint(...Object.values(fingerprintParams))
+	.then((successfulPromiseResponse) => {
+		common.output(successfulPromiseResponse, "Fingerprint response from helper methods", "HelperMethods.getFingerprint");
 		globals.fingerprintResponse = successfulPromiseResponse;
 
-		firstAuthorise3ds2(successfulPromiseResponse.threeDSCompInd);
+		// send result to Adyen API
+		callAuthorise3ds2({ threeDS2RequestData: successfulPromiseResponse });
 
 	}, (failedPromiseResponse) => {
-		common.output("Verification request to SDK failed - check log for more details", "Fingerprint response from SDK");
-		console.log("Verification request to SDK failed:");
+		// something went wrong
+		common.output("Verification request to helper methods failed - check log for more details", "Fingerprint response from helper methods");
+		console.log("Verification request to helper methods failed:");
 		console.log(failedPromiseResponse);
 	});
 
 	globals.flowchart.setActive("FingerprintDevice");
 }
 
-// call /authorise3ds2 with the result of the fingerprint
-function firstAuthorise3ds2(threeDSCompInd) {
-	const url = common.SERVER_URL;
-	let params = "";
-	params += "?threeDSCompInd=" + threeDSCompInd;
-	params += "&threeDS2Token=" + encodeURIComponent(globals.threeDS2Token);
-	params += "&endpoint=threeds2_part2";
-
-	common.AJAXGet(url + params, firstAuthorise3ds2Callback);
-}
-
-function firstAuthorise3ds2Callback(data) {
-	// parse and output request / response
-	const request = data.request;
-	const response = data.response;
-
-	common.output(request, "Request from server to Adyen", data.endpoint);
-	common.output(response, "Response from Adyen to server");
-
-	if (response.resultCode === "ChallengeShopper") {
-		// put all of the required 3DS 2.0 data into the global namespace
-		// in case the challenge is failed and we want to retry
-		globals.cReqData = {
-			threeDSServerTransID : response.additionalData['threeds2.threeDS2ResponseData.threeDSServerTransID'],
-			acsTransID : response.additionalData['threeds2.threeDS2ResponseData.acsTransID'],
-			messageVersion : response.additionalData['threeds2.threeDS2ResponseData.messageVersion'],
-			messageType : 'CReq',
-			challengeWindowSize: '04'
-		};
-		globals.acsURL = response.additionalData["threeds2.threeDS2ResponseData.acsURL"].replace(/\\/g, "");
-
-		// save token and pspReference for later
-		globals.threeDS2Token = response.additionalData["threeds2.threeDS2Token"].replace(/\\/g, "");
-		globals.challengePspReference = response.pspReference;
-
-		// execute the challenge via the SDK
-		doChallenge();
-	}
-	else if (response.resultCode === "AuthenticationFinished" || response.resultCode === "Authorised") {
-		globals.flowchart.setActive("Frictionless");
-	}
-}
-
-// perform challenge via SDK
-function doChallenge() {
-	// config data for SDK to execute challenge
+// perform challenge via helper methods
+function challengeShopper(challengeShopperResponse) {
+	// config data for helper methods to execute challenge
 	const iframeConfig = {
 		size: '01', // The size you'd like the iframe to be can be '01' - '05' as documented
 		container: document.querySelector("#sdkContainer") // Container to place the generated iframe into OR an actual iframe
 	};
 
-	common.output("acsURL: " + globals.acsURL + "<br>iframeConfig: " + JSON.stringify(iframeConfig, null, 4) + "<br>cReqData: " + JSON.stringify(globals.cReqData, null, 4), "Challenge request to SDK", "SDK.doChallenge");
+	// build CReq for request to issuer
+	const cReqData = {
+		threeDSServerTransID : challengeShopperResponse.additionalData['threeds2.threeDS2ResponseData.threeDSServerTransID'],
+		acsTransID : challengeShopperResponse.additionalData['threeds2.threeDS2ResponseData.acsTransID'],
+		messageVersion : challengeShopperResponse.additionalData['threeds2.threeDS2ResponseData.messageVersion'],
+		messageType : 'CReq',
+		challengeWindowSize: '01'
+	};
+
+	const acsURL = challengeShopperResponse.additionalData['threeds2.threeDS2ResponseData.acsURL'];
+
+	common.output("acsURL: " + acsURL + "<br>iframeConfig: " + JSON.stringify(iframeConfig, null, 4) + "<br>cReqData: " + JSON.stringify(cReqData, null, 4),
+		"Challenge request to helper methods",
+		"HelperMethods.doChallenge"
+	);
 	globals.flowchart.setActive("ChallengeShopper");
 
 	// create the iframe for the promise
-	SDK.doChallenge(globals.acsURL, globals.cReqData, iframeConfig, THREE_DS_NOTIFICATION_URL).then(
-		handleSuccessfulSDKChallengePromise, 
-		handleFailedSDKChallengePromise);
+	// the URL in the final param must be the same as in threeDS2RequestData.notificationURL
+	HelperMethods.doChallenge(acsURL, cReqData, iframeConfig, common.RETURN_URL)
+	.then(successfulPromiseResponse => {
+		common.output(successfulPromiseResponse, "Challenge succeeded");
+
+		// call Adyen API with result
+		callAuthorise3ds2({ threeDS2Result: successfulPromiseResponse });
+
+	}, failedPromiseResponse => {
+		common.output(failedPromiseResponse, "Challenge failed");
+	})
+	.finally(() => {
+		console.log("finally");
+		// remove challenge iframe
+		common.hide("#sdkContainer");
+	});
 
 	// show challenge iframe
 	document.querySelector("#sdkContainer").classList.remove("hidden");
 }
 
-// doChallenge successful resolution
-function handleSuccessfulSDKChallengePromise(successfulPromiseResponse) {
-	common.output("threeDSServerTransID=" + successfulPromiseResponse.threeDSServerTransID + "<br>transStatus=" + successfulPromiseResponse.transStatus, "Challenge succeeded");
-
-	// remove challenge iframe
-	common.hide("#sdkContainer");
-
-	// handle next step in process
-	postChallengeAuthorise3ds2(successfulPromiseResponse.transStatus);
-}
-
-// doChallenge failed resolution
-function handleFailedSDKChallengePromise(failedPromiseResponse) {
-	common.output(failedPromiseResponse, "Challenge failed");
-	console.log(failedPromiseResponse);
-
-	// remove challenge iframe
-	common.hide("#sdkContainer");
-}
-
-// post-challenge /authorise3ds2 call
-// returns authorised if authenticationOnly = false
-// returns MPI data if authenticationOnly = true
-function postChallengeAuthorise3ds2(transStatus) {
-	const request = {
-		"merchantAccount":"", 
-		"threeDS2Token": globals.threeDS2Token,
-		"threeDS2Result": {
-		   "transStatus": transStatus
-		},
-	};
-	request.endpoint = common.endpoints.authorise3ds2;
-
-	common.AJAXPost(common.SERVER_URL, postChallengeAuthorise3ds2Callback, request);
-}
-
-// response from post-challenge /authorise3ds2 call
-function postChallengeAuthorise3ds2Callback(data) {
-	const request = data.request;
-	const response = data.response;
-
-	common.output(request, "Post-challenge /authorise3ds2 call", data.endpoint);
-	common.output(response, "Response to post-challenge /authorise3ds2 call");
-
-	if (response.resultCode === "AuthenticationFinished") {
-		globals.flowchart.setActive("RetrieveMPIData");
-		authoriseWithMPIData(response.additionalData);
-	}
-	else {
-		globals.flowchart.setActive("AuthoriseViaAdyen");
-	}
-}
-
 // authorise with raw MPI data
 function authoriseWithMPIData(threeDS2Result) {
 	const request = {
-		"amount":{
-			"currency":"EUR",
-			"value":1000
+		amount:{
+			currency:"EUR",
+			value:1000
 		 },
-		 "merchantAccount":"", 
-		 "reference":"Localhost 3ds2 with MPI data",
+		 merchantAccount:"", 
+		 reference:"Localhost 3ds2 with MPI data",
 		 "additionalData" : {
-			"acquirerCode":"TestPmmAcquirer",
-			"authorisationMid":"1000"
+			acquirerCode:"TestPmmAcquirer",
+			authorisationMid:"1000"
 		},
-		"mpiData":{  
-			"cavv": threeDS2Result["threeds2.threeDS2Result.authenticationValue"],
-			"eci": threeDS2Result["threeds2.threeDS2Result.eci"],
-			"dsTransId": threeDS2Result["threeds2.threeDS2Result.dsTransID"],
-			"directoryResponse": "C", // assuming there was a challenge
-			"authenticationResponse": threeDS2Result["threeds2.threeDS2Result.transStatus"],
-			"threeDSVersion": "2.1.0" // will we ever return this in the /payments/details call?
+		mpiData:{  
+			cavv: threeDS2Result["threeds2.threeDS2Result.authenticationValue"],
+			eci: threeDS2Result["threeds2.threeDS2Result.eci"],
+			dsTransId: threeDS2Result["threeds2.threeDS2Result.dsTransID"],
+			directoryResponse: "C", // assuming there was a challenge
+			authenticationResponse: threeDS2Result["threeds2.threeDS2Result.transStatus"],
+			threeDSVersion: "2.1.0" // will we ever return this in the /payments/details call?
 		},
-		"card": {
-			"number": "4917610000000000",
-			"expiryMonth": "10",
-			"expiryYear": "2020",
-			"holderName": "John Smith",
-			"cvc": "737"
+		card: {
+			number: "4917610000000000",
+			expiryMonth: "10",
+			expiryYear: "2020",
+			holderName: "John Smith",
+			cvc: "737"
 		}
 	};
 	request.endpoint = common.endpoints.authorise;

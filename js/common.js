@@ -8,8 +8,8 @@ export const JSON_ENCODED_HEADER = { "Content-Type": "application/json" };
 
 // local server URLs
 export const SERVER_URL = "http://localhost:8000/cgi-bin/server.py";
-export const THREE_DS_NOTIFICATION_URL = "http://localhost:8000/cgi-bin/threeDSNotification.py";
-export const RETURN_URL = "http://localhost:8000/cgi-bin/returnUrl.py";
+export const SEND_POST_MESSAGE = "http://localhost:8000/cgi-bin/send_post_message.py";
+export const RETURN_URL = "http://localhost:8000/cgi-bin/echo.py";
 
 // API versions
 const CHECKOUT_VERSION = "v49";
@@ -72,6 +72,32 @@ export function AJAXGet(path, callback) {
 	};
 
 	request.send();
+}
+
+/* 
+parses and logs API calls
+
+for easier logging, server.py returns an object with format:
+{
+	request: {
+		// JSON body of request to API
+	},
+	response: {
+		// JSON body of response from API
+	},
+	endpoint: // API endpoint called
+}
+
+returns the response JSON object
+*/
+export function parseServerResponse(data) {
+	const request = data.request;
+	const response = data.response;
+
+	output(request, "Request from server to Adyen", data.endpoint);
+	output(response, "Response from Adyen to server");
+
+	return response;
 }
 
 // utility to output to web page
@@ -221,4 +247,9 @@ export function collectBrowserInfo() {
     };
 
     return browserInfo;
+}
+
+// convert functions to pretty output
+export function stringifyFunction(func) {
+	return func.toString().replace(/    /g, "\t").replace(/\t/g, "    ");
 }

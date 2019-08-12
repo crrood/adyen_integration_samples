@@ -1,7 +1,7 @@
 #!/usr/local/adyen/python3/bin/python3
 
 ##########################
-##		Return URL		##
+##		3D Secure		##
 ##########################
 
 # handler for callback from issuing bank
@@ -18,6 +18,11 @@ from urllib.parse import parse_qs
 from ServerUtils import ServerUtils
 utils = ServerUtils("CGI")
 
+# log request
+utils.logger.info("")
+utils.logger.info("")
+utils.logger.info("------- incoming request to threeDSNotification.py -------")
+
 # parse payment data from URL params
 content_length = int(os.environ["CONTENT_LENGTH"])
 raw_request = sys.stdin.read(content_length)
@@ -27,4 +32,14 @@ data = {}
 for key in form.keys():
 	data[key] = form[key]
 
-utils.send_response(data, "application/json")
+utils.logger.info("incoming POST params:")
+utils.logger.info(data)
+
+# send post message back to client
+post_message = """
+	<script type="text/javascript">
+	window.parent.postMessage({data}, "http://localhost:8000");
+	</script>
+""".format(data=data)
+
+utils.send_response(post_message, "text/html")

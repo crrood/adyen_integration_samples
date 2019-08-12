@@ -83,7 +83,7 @@ window.onload = () => {
 
 	// Add submit button to DOM
 	const authoriseButton = document.createElement("button");
-	authoriseButton.onclick = submitForm;
+	authoriseButton.onclick = initialPaymentsCall;
 	authoriseButton.innerHTML = "Authorise";
 	authoriseButton.id = "authoriseBtn";
 	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
@@ -124,7 +124,7 @@ window.onload = () => {
 //////////////////////////
 
 // send form data to server
-function submitForm() {
+function initialPaymentsCall() {
 
 	// hide checkout form
 	common.hide(".checkout-holder");
@@ -134,19 +134,25 @@ function submitForm() {
 	globals.authenticationOnly = document.querySelector("#standaloneCheckbox").checked;
 
 	// get browser info
-	const browserInfo = collectBrowserInfo();
+	const browserInfo = common.collectBrowserInfo();
 	browserInfo.acceptHeader = "";  // filled in by server when field is present
 
-	// build request framework
+	// build API request
 	const request = {
 		amount:{
 			currency: "EUR",
 			value: value
 		},
+		additionalData: {
+			allow3DS2: false
+		},
 		reference: "Localhost 3ds2 basic component",
 		threeDS2RequestData: {
 			authenticationOnly: globals.authenticationOnly
 		},
+		// additionalData: {
+		// 	executeThreeD: false
+		// },
 		billingAddress: {
 			country: "US",
 			city: "Brooklyn",
@@ -195,11 +201,13 @@ function submitForm() {
 		}
 	}
 
+	// update flowchart state
+	globals.flowchart.setActive("First/paymentsCall");
+
 	// send to server
 	request.endpoint = common.endpoints.payments;
 	common.AJAXPost(common.SERVER_URL, paymentsCallback, request);
 
-	globals.flowchart.setActive("First/paymentsCall");
 
 	// block default form behavior
 	return false;
@@ -224,7 +232,7 @@ function paymentsCallback(data) {
 
 		// execute the fingerprint via the SDK
 		doFingerprint(response.authentication["threeds2.fingerprintToken"]);
-		common.output(stringifyFunction(doFingerprint), "Javascript - Fingerprint request to component");
+		common.output(common.stringifyFunction(doFingerprint), "Javascript - Fingerprint request to component");
 
 		globals.flowchart.setActive("FingerprintDevice");
 	}
@@ -233,7 +241,7 @@ function paymentsCallback(data) {
 		// save paymentData
 		globals.paymentData = response.paymentData;
 
-		common.output(stringifyFunction(doChallenge), "Javascript - Challenge request to component");
+		common.output(common.stringifyFunction(doChallenge), "Javascript - Challenge request to component");
 
 		// show challenge iframe
 		document.querySelector("#sdkContainer").classList.remove("hidden");
@@ -340,47 +348,6 @@ function doChallenge(challengeToken) {
 			size: '01'
 		})
 		.mount('#sdkContainer');
-}
-
-//////////////////////////////
-//		UTILITY METHODS		//
-//////////////////////////////
-
-// convert functions to pretty output
-function stringifyFunction(func) {
-	return func.toString().replace(/    /g, "\t").replace(/\t/g, "    ");
-}
-
-// generate browserInfo object
-function collectBrowserInfo() {
-
-    const screenWidth = window && window.screen ? window.screen.width : '';
-    const screenHeight = window && window.screen ? window.screen.height : '';
-    const colorDepth = window && window.screen ? window.screen.colorDepth : '';
-    const userAgent = window && window.navigator ? window.navigator.userAgent : '';
-    const javaEnabled = window && window.navigator ? navigator.javaEnabled() : false;
-
-    let language = '';
-    if (window && window.navigator) {
-        language = window.navigator.language
-            ? window.navigator.language
-            : window.navigator.browserLanguage; // Else is for IE <+ 10
-    }
-
-    const d = new Date();
-    const timeZoneOffset = d.getTimezoneOffset();
-
-    const browserInfo = {
-        screenWidth,
-        screenHeight,
-        colorDepth,
-        userAgent,
-        timeZoneOffset,
-        language,
-        javaEnabled,
-    };
-
-    return browserInfo;
 }
 
 </script>

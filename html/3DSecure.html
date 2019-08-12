@@ -154,7 +154,7 @@ function initialPaymentsRequest() {
 		},
 		browserInfo: common.collectBrowserInfo(),
 		merchantAccount: "",  // filled in by server from config.ini
-		returnUrl: common.THREE_DS_NOTIFICATION_URL,
+		returnUrl: common.SEND_POST_MESSAGE,
 		origin: "http://localhost:8000",
 		additionalData: {
 			threeDS2InMDFlow: document.querySelector("#threeds2inMDFlowCheckbox").checked.toString()

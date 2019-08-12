@@ -1,6 +1,5 @@
-import { SUBMIT_URL, uuid } from "./common.js";
+import { uuid } from "./common.js";
 
-const NOTIFICATION_URL = SUBMIT_URL + "?endpoint=threeds2_result_page";
 const CACHED_THREEDS_URL = "https://pal-test.adyen.com/threeds2simulator/acs/startMethod.shtml";
 
 const globals = {};
@@ -72,11 +71,11 @@ export const doChallenge = (acsURL, cReqData, iframeConfig, notificationURL) => 
                             clearInterval(globals.checkChallengeInterval);
                             
                             // pull cres data from the document body
-                            let cres = JSON.parse(iframe.contentDocument.querySelector("pre").innerHTML.trim());
-                            let transStatus = cres.transStatus;
+                            const cres = JSON.parse(atob(JSON.parse(iframe.contentDocument.querySelector("body").innerHTML).cres));
 
                             // remove the iframe and resolve the promise
                             iframe.remove();
+                            const transStatus = cres.transStatus;
                             if (transStatus === "Y") {
                                 resolve( { transStatus: transStatus } );
                             }
@@ -88,6 +87,7 @@ export const doChallenge = (acsURL, cReqData, iframeConfig, notificationURL) => 
                     catch(error) {
                         // will return a CORS error if the challenge hasn't been completed yet
                         // this is expected - don't throw an error
+                        console.log(error);
                     }
                 }, 1000);
             }
