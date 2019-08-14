@@ -244,6 +244,9 @@ function handlePostMessage(e) {
 		request = {
 			md: e.data.MD[0],
 			paResponse: e.data.PaRes[0],
+			threeDS2RequestData: {
+				authenticationOnly: true
+			},
 			merchantAccount: "" // filled in by server from config.ini
 		}
 

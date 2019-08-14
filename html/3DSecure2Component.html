@@ -144,15 +144,11 @@ function initialPaymentsCall() {
 			value: value
 		},
 		additionalData: {
-			allow3DS2: false
+			allow3DS2: true
+			// executeThreeD: false
 		},
 		reference: "Localhost 3ds2 basic component",
-		threeDS2RequestData: {
-			authenticationOnly: globals.authenticationOnly
-		},
-		// additionalData: {
-		// 	executeThreeD: false
-		// },
+		threeDSAuthenticationOnly: globals.authenticationOnly,
 		billingAddress: {
 			country: "US",
 			city: "Brooklyn",
@@ -196,6 +192,7 @@ function initialPaymentsCall() {
 	// add BIN / MID if necessary
 	if (globals.authenticationOnly) {
 		request.additionalData = {
+			...request.additionalData,
 			acquirerCode: "TestPmmAcquirer",
 			authorisationMid: "1000"
 		}
