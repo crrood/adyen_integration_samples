@@ -148,7 +148,7 @@ function initialPaymentsCall() {
 			// executeThreeD: false
 		},
 		reference: "Localhost 3ds2 basic component",
-		threeDSAuthenticationOnly: globals.authenticationOnly,
+		// threeDSAuthenticationOnly: globals.authenticationOnly,
 		billingAddress: {
 			country: "US",
 			city: "Brooklyn",
@@ -156,6 +156,9 @@ function initialPaymentsCall() {
 			houseNumberOrName: "836 Bedford Avenue",
 			stateOrProvince: "NY",
 			postalCode: "11205"
+		},
+		threeDS2RequestData: {
+			authenticationOnly: globals.authenticationOnly
 		},
 		browserInfo: browserInfo,
 		channel: "web",
