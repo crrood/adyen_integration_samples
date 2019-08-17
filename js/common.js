@@ -74,7 +74,7 @@ export function AJAXGet(path, callback) {
 	request.send();
 }
 
-/* 
+/*
 parses and logs API calls
 
 for easier logging, server.py returns an object with format:
@@ -160,7 +160,7 @@ export function output(text, title = null, subtitle = null, indentation = 4) {
 	// set summary to title if it's supplied
 	if (title) {
 		summary = title;
-		
+
 		// append arrow at end of summary
 		summary += " &#9656;";
 	}
@@ -251,5 +251,5 @@ export function collectBrowserInfo() {
 
 // convert functions to pretty output
 export function stringifyFunction(func) {
-	return func.toString().replace(/    /g, "\t").replace(/\t/g, "    ");
+	return func.toString().replace(/ {4}/g, "\t").replace(/\t/g, "    ");
 }

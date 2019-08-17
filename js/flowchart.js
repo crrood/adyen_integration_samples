@@ -21,13 +21,13 @@ export default class Flowchart {
 		this.rootNode = this.generateTreeStructure(inputArray, null);
 
 		this.attachToDOM(targetElement);
-		
+
 		this.initialHeight = targetElement.getBoundingClientRect().height;
 		window.onresize = this.scale.bind(this);
 	}
 
 	// automated tree generator
-	// 
+	//
 	// takes an array as an input, of the form
 	// [
 	//		rootNode,
@@ -89,7 +89,7 @@ export default class Flowchart {
 
 			// apply css transformation
 			el.style.webkitTransform = `scale(${scale}) translate(${percentScaleX}, ${percentScaleY})`;
-			
+
 			// scale style.height to adjust layout
 			if (this.initialHeight) {
 				el.style.height = (this.initialHeight * scale) + "px";
@@ -119,13 +119,13 @@ class FlowchartNode {
 		this.id = text.replace(/ /g, "");
 		this.parent = null;
 		this.children = [];
-		
+
 		this.domElement = document.createElement("code");
 		this.domElement.id = this.id;
 		this.domElement.textContent = this.text;
 		this.setState(stateEnum.INACTIVE);
 	}
-	
+
 	// set parent reference
 	// and parent's child to this
 	setParent(parentNode) {
@@ -148,7 +148,7 @@ class FlowchartNode {
 	// and child's parent to this
 	addChild(childNode) {
 		if (childNode instanceof FlowchartNode) {
-			
+
 			// sets child reference
 			this.children.push(childNode);
 

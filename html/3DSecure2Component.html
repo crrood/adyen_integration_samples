@@ -12,7 +12,7 @@
 		<h2>Network activity</h2>
 		<div id="output"></div>
 	</div>
-	
+
 	<div class="right-column fixed">
 		<div class="flowchart-container">
 			<figure class="flowchart">
@@ -87,7 +87,7 @@ window.onload = () => {
 	authoriseButton.innerHTML = "Authorise";
 	authoriseButton.id = "authoriseBtn";
 	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
-	
+
 	// add dynamic flowchart
 	let tree = [
 		"First /payments Call",
@@ -95,10 +95,10 @@ window.onload = () => {
 			"Fingerprint Device",
 			[
 				"Frictionless",
-				"Challenge Shopper", 
+				"Challenge Shopper",
 				[
 					"Authorise With Token",
-					"Retrieve MPI Data", 
+					"Retrieve MPI Data",
 					[
 						"Authorise Via Adyen",
 						"Authorise Elsewhere"
@@ -114,6 +114,7 @@ window.onload = () => {
 	globals.challengePerformed = false;
 
 	// Adyen 3ds2 component
+	/* global AdyenCheckout */
 	globals.checkout = new AdyenCheckout({
 		originKey: common.ORIGIN_KEY
 	});
@@ -128,7 +129,7 @@ function initialPaymentsCall() {
 
 	// hide checkout form
 	common.hide(".checkout-holder");
-	
+
 	// handle checkbox options
 	const value = document.querySelector("#frictionlessCheckbox").checked ? 12002 : 1000;
 	globals.authenticationOnly = document.querySelector("#standaloneCheckbox").checked;
@@ -263,7 +264,7 @@ function paymentsCallback(data) {
 
 		// update flowchart state
 		if (globals.challengePerformed) {
-			if (request.hasOwnProperty("paymentData")) {
+			if (Object.prototype.hasOwnProperty.call(request, "paymentData")) {
 				globals.flowchart.setActive("AuthoriseWithToken");
 			}
 			else {
@@ -296,9 +297,9 @@ function authoriseWithMPIData(threeDS2Result) {
 			currency:"EUR",
 			value:1000
 		},
-		merchantAccount:"", 
+		merchantAccount:"",
 		reference:"Localhost 3ds2 with MPI data",
-		mpiData:{  
+		mpiData:{
 			cavv: threeDS2Result.authenticationValue,
 			eci: threeDS2Result.eci,
 			dsTransId: threeDS2Result.dsTransID,
@@ -319,17 +320,17 @@ function authoriseWithMPIData(threeDS2Result) {
 
 function doFingerprint(fingerprintToken) {
 	globals.checkout
-        .create("threeDS2DeviceFingerprint", {
-            fingerprintToken: fingerprintToken,
-            onComplete: fingerprintData => {
-            	common.output(JSON.stringify(fingerprintData), "Javascript - Fingerprint result");
-            	callPaymentsDetails(fingerprintData);
-            },
-            onError: () => {
-            	common.output("Verification request to component failed", "Fingerprint response from component");
-            }
-        })
-        .mount("#sdkContainer");
+				.create("threeDS2DeviceFingerprint", {
+						fingerprintToken: fingerprintToken,
+						onComplete: fingerprintData => {
+							common.output(JSON.stringify(fingerprintData), "Javascript - Fingerprint result");
+							callPaymentsDetails(fingerprintData);
+						},
+						onError: () => {
+							common.output("Verification request to component failed", "Fingerprint response from component");
+						}
+				})
+				.mount("#sdkContainer");
 }
 
 // perform challenge via SDK

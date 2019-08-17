@@ -95,7 +95,7 @@ function handlePaymentMethodsCallback(data) {
 	// iterate through returned payment methods
 	// and render components where available
 	for (let pm of data.response.paymentMethods) {
-		
+
 		console.log("adding component for " + pm.type);
 		let pmType = pm.type;
 

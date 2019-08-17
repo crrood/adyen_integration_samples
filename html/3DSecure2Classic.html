@@ -83,18 +83,18 @@ window.onload = () => {
 	authoriseButton.innerHTML = "Authorise";
 	authoriseButton.id = "authoriseBtn";
 	document.querySelector("#authoriseBtnHolder").appendChild(authoriseButton);
-	
+
 	// add dynamic flowchart
 	let tree = [
 		"Initial Authorise",
 		[
-			"Fingerprint Device", 
+			"Fingerprint Device",
 			[
 				"Frictionless",
 				"Challenge Shopper",
 				[
 					"Authorise With Token",
-					"Retrieve MPI Data", 
+					"Retrieve MPI Data",
 					[
 						"Authorise Via Adyen",
 						"Authorise Elsewhere"
@@ -120,7 +120,7 @@ function initialAuthoriseCall() {
 
 	// hide checkout form
 	document.querySelector(".checkout-holder").classList.add("display-none");
-	
+
 	// handle frictionless checkbox
 	let value = 1000;
 	if (document.querySelector("#frictionlessCheckbox").checked) {
@@ -336,13 +336,13 @@ function authoriseWithMPIData(threeDS2Result) {
 			currency:"EUR",
 			value:1000
 		 },
-		 merchantAccount:"", 
+		 merchantAccount:"",
 		 reference:"Localhost 3ds2 with MPI data",
 		 "additionalData" : {
 			acquirerCode:"TestPmmAcquirer",
 			authorisationMid:"1000"
 		},
-		mpiData:{  
+		mpiData:{
 			cavv: threeDS2Result["threeds2.threeDS2Result.authenticationValue"],
 			eci: threeDS2Result["threeds2.threeDS2Result.eci"],
 			dsTransId: threeDS2Result["threeds2.threeDS2Result.dsTransID"],
