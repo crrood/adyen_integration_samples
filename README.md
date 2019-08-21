@@ -4,7 +4,7 @@ End-to-end code samples for all of the available Adyen integrations, meant as a 
 ## Setup:
 Download the source code to your local computer:
 ```bash
-git clone https://github.com/crrood/adyen_python_sandbox.git
+git clone https://github.com/crrood/adyen_integration_samples.git
 ```
 Add authentication credentials to `config.ini`.  See `example_config.ini` for file format:
 ```
@@ -16,7 +16,7 @@ apiKey = [Your webservice user API key]
 Change the value of ORIGIN_KEY in js/common.js to the value generated for your webservice user per the below:
 https://docs.adyen.com/user-management/how-to-get-an-origin-key
 
-Finally, make sure python3 is in your path and run `./update_python_path` to configure the server.  
+Finally, make sure python3 is in your path and run `./update_python_path.sh` to configure the server.  
 
 ## Start
 From the base directory, start a server with the supplied script:

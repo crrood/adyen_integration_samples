@@ -170,9 +170,12 @@ export function output(text, title = null, subtitle = null, indentation = 4) {
 	const outputTextContainer = document.createElement("pre");
 	const outputText = document.createElement("code");
 	outputTextContainer.appendChild(outputText);
-	outputTextContainer.classList.add("output-main-body");
+	outputText.classList.add("output-main-body");
 	outputText.innerHTML = text;
 	contentEl.appendChild(outputTextContainer);
+
+	// add highlighting
+	hljs.highlightBlock(outputText);
 
 	// create summary element
 	const summaryEl = document.createElement("div");
