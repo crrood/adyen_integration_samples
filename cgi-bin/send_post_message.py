@@ -1,8 +1,8 @@
 #!/usr/local/adyen/python3/bin/python3
 
-##########################
-##		3D Secure		##
-##########################
+#########################
+#       3D Secure		#
+#########################
 
 # handler for callback from issuing bank
 #
@@ -11,7 +11,8 @@
 ##########################
 
 # imports
-import os, sys
+import os
+import sys
 from urllib.parse import parse_qs
 
 # custom server utilities
@@ -30,16 +31,16 @@ form = parse_qs(raw_request)
 
 data = {}
 for key in form.keys():
-	data[key] = form[key]
+    data[key] = form[key]
 
 utils.logger.info("incoming POST params:")
 utils.logger.info(data)
 
 # send post message back to client
 post_message = """
-	<script type="text/javascript">
-	window.parent.postMessage({data}, "http://localhost:8000");
-	</script>
+    <script type="text/javascript">
+    window.parent.postMessage({data}, "http://localhost:8000");
+    </script>
 """.format(data=data)
 
 utils.send_response(post_message, "text/html")

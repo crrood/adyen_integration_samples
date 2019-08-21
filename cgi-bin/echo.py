@@ -1,15 +1,16 @@
 #!/usr/local/adyen/python3/bin/python3
 
-##########################
-##		Return URL		##
-##########################
+#########################
+#       Return URL		#
+#########################
 
 # echos POST params back to client as JSON object
 
 ##########################
 
 # imports
-import os, sys
+import os
+import sys
 from urllib.parse import parse_qs
 
 # custom server utilities
@@ -23,6 +24,6 @@ form = parse_qs(raw_request)
 
 data = {}
 for key in form.keys():
-	data[key] = form[key]
+    data[key] = form[key]
 
 utils.send_response(data, "text/html")

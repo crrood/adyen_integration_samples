@@ -1,2 +1,5 @@
 .DS_Store
 config.ini
+node_modules
+package-lock.json
+.eslintrc.json
