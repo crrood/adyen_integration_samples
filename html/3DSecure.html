@@ -230,40 +230,19 @@ function handlePostMessage(e) {
 	common.hide("#threeDSIframe");
 	common.output(e.data, "Data in redirect from issuer");
 
-	// TODO
-	// remove this switch once authenticationOnly works with /payments/details
-	let request = {};
-	if (!globals.authenticationOnly) {
-		request = {
-			paymentData: globals.paymentData,
-			details: {
-				MD: e.data.MD[0],
-				PaRes: e.data.PaRes[0]
-			}
+	const request = {
+		paymentData: globals.paymentData,
+		details: {
+			MD: e.data.MD[0],
+			PaRes: e.data.PaRes[0]
 		}
-
-		request.endpoint = common.endpoints.paymentsDetails;
 	}
-	else {
-		// fall back to /authorise3d endpoint
-		request = {
-			md: e.data.MD[0],
-			paResponse: e.data.PaRes[0],
-			threeDS2RequestData: {
-				authenticationOnly: true
-			},
-			merchantAccount: "" // filled in by server from config.ini
-		}
-
-		request.endpoint = common.endpoints.authorise3d;
-	}
-
-	// leaving this outside of the above block
-	// since it should still be separate after removing the switch
+	
 	if (globals.authenticationOnly) {
 		request.threeDSAuthenticationOnly = true;
 	}
 
+	request.endpoint = common.endpoints.paymentsDetails;
 	common.AJAXPost(common.SERVER_URL, postRedirectCallback, request);
 }
 

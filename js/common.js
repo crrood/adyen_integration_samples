@@ -12,7 +12,7 @@ export const SEND_POST_MESSAGE = "http://localhost:8000/cgi-bin/send_post_messag
 export const RETURN_URL = "http://localhost:8000/cgi-bin/echo.py";
 
 // API versions
-const CHECKOUT_VERSION = "v49";
+const CHECKOUT_VERSION = "v50";
 const PAL_VERSION = "v49";
 
 // Adyen endpoints
