@@ -10,7 +10,7 @@ body {
 }
 
 body.dark {
-	background-color: #00112C;
+	background-image: linear-gradient(to right, #00112C, #00112C 50%, #E8E8E8 50%);
 	color: #D3D3D3;
 }
 
@@ -19,7 +19,7 @@ body.index-page {
 }
 
 ::selection {
-	background: #9FDBB7;
+	background: #A7A7A7;
 }
 
 .block {
@@ -201,8 +201,6 @@ button:disabled {
 }
 
 body.dark .right-column {
-	height: 100%;
-	background-color: #E8E8E8;
 	color: #222;
 }
 
