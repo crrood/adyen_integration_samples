@@ -305,10 +305,13 @@ function challengeShopper(challengeShopperResponse) {
 
 	const acsURL = challengeShopperResponse.additionalData['threeds2.threeDS2ResponseData.acsURL'];
 
-	common.output("acsURL: " + acsURL + "<br>iframeConfig: " + JSON.stringify(iframeConfig, null, 4) + "<br>cReqData: " + JSON.stringify(cReqData, null, 4),
-		"Challenge request to helper methods",
-		"HelperMethods.doChallenge"
-	);
+	const outputJSON = {
+		iframeConfig: iframeConfig,
+		cReqData: cReqData,
+		acsURL
+	};
+
+	common.output(outputJSON, "Challenge request to helper methods",  "HelperMethods.doChallenge");
 	globals.flowchart.setActive("ChallengeShopper");
 
 	// create the iframe for the promise

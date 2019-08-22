@@ -3,13 +3,19 @@
 /*******************/
 body {
 	font-family: "Fakt", sans-serif;
+	font-size: 1.1em;
 	-webkit-font-smoothing: auto;
+
 	padding: 20px;
 }
 
 body.dark {
 	background-color: #00112C;
 	color: #D3D3D3;
+}
+
+body.index-page {
+	font-size: 1.2em;
 }
 
 ::selection {
