@@ -152,18 +152,7 @@ function initialPaymentsCall() {
 			// executeThreeD: false
 		},
 		reference: "Localhost 3ds2 basic component",
-		// threeDSAuthenticationOnly: globals.authenticationOnly,
-		billingAddress: {
-			country: "US",
-			city: "Brooklyn",
-			street: "N/A",
-			houseNumberOrName: "836 Bedford Avenue",
-			stateOrProvince: "NY",
-			postalCode: "11205"
-		},
-		threeDS2RequestData: {
-			authenticationOnly: globals.authenticationOnly
-		},
+		threeDSAuthenticationOnly: globals.authenticationOnly,
 		browserInfo: browserInfo,
 		channel: "web",
 		origin: window.location.href,
@@ -200,8 +189,8 @@ function initialPaymentsCall() {
 	if (globals.authenticationOnly) {
 		request.additionalData = {
 			...request.additionalData,
-			acquirerCode: "TestPmmAcquirer",
-			authorisationMid: "1000"
+			// acquirerCode: "TestPmmAcquirer",
+			// authorisationMid: "1000"
 		}
 	}
 
