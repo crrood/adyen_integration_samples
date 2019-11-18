@@ -1,0 +1,151 @@
+<html>
+
+<head>
+   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js"></script>
+   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.3.0/adyen.css" />
+   <link rel="stylesheet" type="text/css" href="../css/style.css">
+   </link>
+
+   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css">
+   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+   <title>Custom Card Component</title>
+</head>
+
+<body class="dark">
+   <div class="left-column">
+      <h1>Network activity</h1>
+      <div id="output"></div>
+   </div>
+
+   <div class="right-column">
+      <h1>Payment info</h1>
+
+      <div id="customCard-container">
+         <label>
+            <span>Card number:</span>
+            <span data-cse="encryptedCardNumber"></span>
+         </label>
+         <label>
+            <span>Expiry date:</span>
+            <span data-cse="encryptedExpiryDate"></span>
+         </label>
+         <label>
+            <span>CVV/CVC:</span>
+            <span data-cse="encryptedSecurityCode"></span>
+         </label>
+      </div>
+      <br>
+      <button id="payBtn" disabled=true>Pay</button>
+   </div>
+</body>
+
+<script type="module">
+
+// js utilities
+import * as common from "../js/common.js";
+
+// object to store global variables
+const globals = {};
+
+// actions to do on page load
+window.onload = function() {
+
+   // set up payBtn
+   globals.payBtn = document.querySelector("#payBtn");
+   globals.payBtn.addEventListener("click", () => sendPayment(globals.state.data));
+
+   // intialize checkout object
+   const sharedConfiguration = {
+      locale: "en_US",
+      originKey: common.ORIGIN_KEY,
+      environment: "test",
+      onChange: handleOnChange
+   };
+   const checkout = new AdyenCheckout(sharedConfiguration);
+
+   // display code to create checkout object
+   const componentInitializerOutput = `const sharedConfiguration = {
+      locale: "en_US",
+      originKey: ORIGIN_KEY,
+      environment: "test",
+      onChange: handleOnChange
+   };
+
+   // intialize checkout object
+   const checkout = new AdyenCheckout(sharedConfiguration);`;
+   common.output(componentInitializerOutput, "Initialize Dropin Component");
+
+   // initialize custom card component
+   globals.customCardComponent = checkout.create("securedfields", {
+      // optional params go here
+   })
+   .mount("#customCard-container");
+};
+
+function handleOnChange(state, component) {
+   globals.state = state;
+   if (state.isValid) {
+      globals.payBtn.disabled = false;
+   }
+   else {
+      globals.payBtn.disabled = true;
+   }
+}
+
+// send payment info to Adyen
+function sendPayment(stateData) {
+   const request = {
+      merchantAccount: "",
+      reference: "Localhost drop-in component",
+      amount:{
+         currency: "USD",
+         value: 1000
+      },
+      paymentMethod: stateData.paymentMethod,
+      returnUrl: common.RETURN_URL,
+      browserInfo: {
+         screenWidth: 2560,
+         colorDepth: 24,
+         language: "en-US",
+         javaEnabled: false,
+         userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
+         acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+         screenHeight: 1440,
+         timeZoneOffset: 420
+      },
+      additionalData: {
+          allow3DS2: true
+      },
+      origin: window.location.origin,
+      channel: "web"
+   };
+   request.endpoint = common.endpoints.payments;
+
+   common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
+}
+
+// display result of call to Adyen
+function handlePaymentsCallback(data) {
+   common.output(data.request, "/payments request", data.endpoint);
+   common.output(data.response, "/payments response");
+
+   // handle follow up actions
+   // if necessary
+   if (data.response.hasOwnProperty("action")) {
+      common.output("globals.dropin.handleAction(data.response.action);", "Handling action from API response");
+      globals.dropin.handleAction(data.response.action);
+   }
+}
+
+// call Adyen /payments/details endpoint
+function callPaymentsDetails(data) {
+   const request = {
+      ...data,
+      endpoint: common.endpoints.paymentsDetails
+   };
+
+   common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
+}
+
+</script>
