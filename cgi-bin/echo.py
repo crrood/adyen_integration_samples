@@ -1,12 +1,11 @@
 #!/usr/local/adyen/python3/bin/python3
+"""
+echos POST params back to client as JSON object
+"""
 
 #########################
 #       Return URL      #
 #########################
-
-# echos POST params back to client as JSON object
-
-##########################
 
 # imports
 import os
@@ -29,7 +28,7 @@ else:
     form = parse_qs(raw_request)
 
     data = {}
-    for key in form.keys():
+    for key in form:
         data[key] = form[key]
 
     utils.send_response(data, "text/html")

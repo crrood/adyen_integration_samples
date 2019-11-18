@@ -1,14 +1,9 @@
 #!/usr/local/adyen/python3/bin/python3
+"""
+handler for callback from issuing bank
 
-#########################
-#       3D Secure		#
-#########################
-
-# handler for callback from issuing bank
-#
-# parses POST data and sends back to client in a javascript postMessage
-
-##########################
+receives 'pares' POST data and sends back to client in a javascript postMessage
+"""
 
 # imports
 import os
@@ -30,7 +25,7 @@ raw_request = sys.stdin.read(content_length)
 form = parse_qs(raw_request)
 
 data = {}
-for key in form.keys():
+for key in form:
     data[key] = form[key]
 
 utils.logger.info("incoming POST params:")

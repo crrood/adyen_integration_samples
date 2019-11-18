@@ -1,4 +1,9 @@
-#!/usr/local/adyen/python3/bin/python3
+"""
+utilities for sending / receiving requests
+
+includes logging, authentication, and response formatting
+"""
+
 import logging
 
 # network methods
@@ -11,6 +16,9 @@ import configparser
 
 
 class ServerUtils():
+    """
+    class to be imported by cgi modules to access utilities
+    """
 
     ########################
     #      CONSTRUCTOR     #
@@ -19,17 +27,17 @@ class ServerUtils():
     def __init__(self,
                  logger_prefix="CGI",
                  config_file="config.ini"):
-        self.logger = self.get_custom_logger(logger_prefix)
+        self.logger = ServerUtils.get_custom_logger(logger_prefix)
         self.config = self.load_config(config_file)
 
     ####################
     #      LOGGING     #
     ####################
-    '''
-    logger with date, time, and custom prefix
-    '''
-    def get_custom_logger(self,
-                          logger_prefix):
+    @staticmethod
+    def get_custom_logger(logger_prefix):
+        """
+        logger with date, time, and custom prefix
+        """
         logging.basicConfig(
             level=logging.DEBUG,
             format='%(asctime)s %(name)s:%(levelname)s %(message)s',
@@ -40,19 +48,20 @@ class ServerUtils():
     ############################
     #      NETWORK METHODS     #
     ############################
-    '''
+    """
     class methods for sending requests and responding to client
-    '''
+    """
 
-    # send request to server and return dict or string response
     def send_request(self,
                      url,
                      request_dict):
-
+        """
+        send request to server and return dict or string response
+        """
         # logging
         self.logger.info("")
-        self.logger.info("sending outgoing request to {}".format(url))
-        self.logger.info("request data: {}".format(request_dict))
+        self.logger.info("sending outgoing request to %s", url)
+        self.logger.info("request data: %s", request_dict)
 
         # encode data
         formatted_data = json.dumps(request_dict).encode("utf8")
@@ -65,7 +74,7 @@ class ServerUtils():
             response = urlopen(request)
             result = response.read()
 
-            self.logger.info("response data: {}".format(result))
+            self.logger.info("response data: %s", result)
 
             # format and return response
             if "application/json" in response.getheader("content-type"):
@@ -76,14 +85,14 @@ class ServerUtils():
                 return result
         except HTTPError as e:
             return "{}".format(e)
-        except Exception as e:
-            return "error sending request: {}".format(e)
 
-    # respond to client
     def send_response(self,
                       response_text,
                       content_type="application/json",
                       skipHeaders=False):
+        """
+        respond to client
+        """
         if not skipHeaders:
             print("Content-type:{}\r\n".format(content_type), end="")
             print("\r\n", end="")
@@ -102,17 +111,18 @@ class ServerUtils():
             return
 
         self.logger.info("")
-        self.logger.info("responding to client with data: {}"
-                         .format(formatted_response))
+        self.logger.info("responding to client with data: %s", formatted_response)
 
         # send response
         print(formatted_response, end="")
 
-    # respond with raw data
-    def send_debug(self,
-                   response_text,
+    @staticmethod
+    def send_debug(response_text,
                    content_type="text/plain",
                    duplicate=False):
+        """
+        respond with raw data
+        """
         if not duplicate:
             print("Content-type:{}\r\n".format(content_type))
         print(response_text)
@@ -120,13 +130,13 @@ class ServerUtils():
     ############################
     #      CONFIGURATION       #
     ############################
-    '''
-    load credentials from config.ini
+    @staticmethod
+    def load_config(config_file):
+        """
+        load credentials from config.ini
 
-    see example_config.ini for file format
-    '''
-    def load_config(self,
-                    config_file):
+        see example_config.ini for file format
+        """
         parser = configparser.ConfigParser()
         parser.read(config_file)
         credentials = parser["credentials"]
@@ -142,6 +152,10 @@ class ServerUtils():
     #      HEADERS     #
     ####################
     def get_json_header(self):
+        """
+        return a generic header for json content
+        including API key
+        """
         return {
             "Content-Type": "application/json",
             "X-API-Key": self.config["api_key"]

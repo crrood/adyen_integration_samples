@@ -20,7 +20,7 @@ from ServerUtils import ServerUtils
 utils = ServerUtils("CGI")
 
 # constants
-ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"  # noqa: E501
+ACCEPT_HEADER = "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
 
 
 #############################
@@ -33,12 +33,12 @@ utils.logger.info("------- incoming request to server.py -------")
 
 # parse URL params
 request_data = parse_qs(os.environ["QUERY_STRING"])
-utils.logger.info("incoming URL params: {}".format(request_data))
+utils.logger.info("incoming URL params: %s", request_data)
 
 # get data from POST fields
 if os.environ["REQUEST_METHOD"] == "POST":
     post_data = json.loads(sys.stdin.read(int(os.environ["CONTENT_LENGTH"])))
-    utils.logger.info("incoming POST data: {}".format(post_data))
+    utils.logger.info("incoming POST data: %s", post_data)
 
     # combine URL and POST params
     request_data.update(post_data)
@@ -50,7 +50,7 @@ try:
 except KeyError:
     utils.logger.error("no endpoint in request data")
     utils.send_debug("no endpoint in request data")
-    exit(1)
+    sys.exit(1)
 
 #################################
 #       SERVER-SIDE FIELDS		#
