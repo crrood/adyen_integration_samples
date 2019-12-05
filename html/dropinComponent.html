@@ -120,6 +120,8 @@ function onSubmit(state, dropin) {
    console.log(state);
    console.log(dropin);
 
+   common.output(state, "onSubmit callback")
+
    sendPayment(state.data);
 }
 
