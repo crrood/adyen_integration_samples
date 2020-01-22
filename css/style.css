@@ -289,25 +289,3 @@ body.dark .right-column {
 
 	width: fit-content;
 }
-
-  /******************/
- /* SECURED FIELDS */
-/******************/
-
-/*
-the default SF styling gets overwritten by the
-`.right-column {position: absolute}` property
-this is a hack to fix it
-
-once I get some time I'll re-write the column layout
-as a grid instead, which will hopefully fix this
-*/
-iframe.js-iframe {
-	display: block;
-	height: 25px !important;
-	width: 300px !important;
-
-	padding: 3px;
-	margin-bottom: 5px;
-	background-color: white;
-}
