@@ -1,12 +1,12 @@
 <html>
 
 <head>
-	<script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.js"></script>
+	<script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.1.0/adyen.js"></script>
 	<link rel="stylesheet"
 	      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css">
 	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
 
-	<link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/2.1.0/adyen.css" />
+	<link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.1.0/adyen.css" />
 	<link rel="stylesheet" type="text/css" href="../css/style.css"></link>
 	<title>Components</title>
 </head>
@@ -22,6 +22,7 @@
 		<h1>Payment info</h1>
 		<div class="block">
 			<form id="paymentForm" class="client-form" >
+				Amount: <input type="text" id="valueInput" name="value" value="1000"/><br>
 				Currency: <input type="text" id="currencyInput" name="currency" value="EUR"/><br>
 				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="NL"/><br>
 				ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB"/><br>
@@ -29,9 +30,11 @@
 			</form>
 		</div>
 
-		<div id="componentHolder" class="component display-none"></div>
+		<div id="componentHolder" class="component display-none">
+			<button id="payBtn" class="hidden" disabled=true>Pay</button>
+		</div>
+		<div id="detailsHolder"></div>
 		<br>
-		<button id="payBtn" class="hidden" disabled=true>Pay</button>
 	</div>
 
 </body>
@@ -59,7 +62,10 @@ function getAvailablePaymentMethods(e) {
 	common.hide("#paymentForm");
 
 	const request = {
-		currency: document.querySelector("#currencyInput").value,
+		amount: {
+			value: document.querySelector("#valueInput").value,
+			currency: document.querySelector("#currencyInput").value
+		},
 		shopperLocale: document.querySelector("#shopperLocaleInput").value,
 		countryCode: document.querySelector("#countryCodeInput").value,
 		merchantAccount: "" // filled in by server
@@ -84,7 +90,9 @@ function handlePaymentMethodsCallback(data) {
 	    locale: document.querySelector("[name=shopperLocale]").value,
 	    originKey: common.ORIGIN_KEY,
 	    loadingContext: "https://checkoutshopper-test.adyen.com/checkoutshopper/",
-	    environment: "test"
+	    environment: "test",
+			onChange: handleOnChange,
+			onAdditionalDetails: handleOnAdditionalDetails
 	};
 
 	// show disabled pay button
@@ -94,10 +102,11 @@ function handlePaymentMethodsCallback(data) {
 	common.unhide("#componentHolder");
 
 	// intialize checkout object
-	const checkout = new AdyenCheckout(sharedConfiguration);
+	globals.checkout = new AdyenCheckout(sharedConfiguration);
 
 	// iterate through returned payment methods
 	// and render components where available
+	globals.mountedComponents = [];
 	for (let pm of data.response.paymentMethods) {
 
 		console.log("adding component for " + pm.type);
@@ -119,10 +128,9 @@ function handlePaymentMethodsCallback(data) {
 			document.querySelector("#componentHolder").appendChild(componentDiv);
 
 			// initialize component
-			checkout.create(pmType, {
-				onChange: handleStateChange,
+			globals.mountedComponents.push(globals.checkout.create(pmType, {
 				details: pm.details,
-			}).mount("#" + componentDiv.id);
+			}).mount("#" + componentDiv.id));
 
 		}
 		catch(e) {
@@ -133,7 +141,7 @@ function handlePaymentMethodsCallback(data) {
 }
 
 // handle changes in component state
-function handleStateChange(state, component) {
+function handleOnChange(state, component) {
 	globals.payBtn.disabled = !state.isValid;
 
 	globals.activePaymentInfo = state.data;
@@ -143,16 +151,39 @@ function handleStateChange(state, component) {
 	}
 }
 
+// provide any extra data which is required
+function handleOnAdditionalDetails(state, component) {
+	common.output(state, "onAdditionalDetails callback");
+
+	callPaymentsDetails(state.data);
+}
+
 // send payment info to Adyen
 function sendPayment() {
 	const formData = common.getJSONFromFormData("#paymentForm");
 	const request = {
-		"merchantAccount":"",
-		"reference":"Localhost components",
-		"amount":{
-			"currency": formData.currency,
-			"value": formData.value
+		merchantAccount: "", // filled in by server
+		reference: "Localhost components",
+		amount: {
+			currency: formData.currency,
+			value: formData.value
 		},
+		returnUrl: common.RETURN_URL,
+		browserInfo: {
+			 screenWidth: 2560,
+			 colorDepth: 24,
+			 language: "en-US",
+			 javaEnabled: false,
+			 userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
+			 acceptHeader: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+			 screenHeight: 1440,
+			 timeZoneOffset: 420
+		},
+		additionalData: {
+				allow3DS2: true
+		},
+		origin: window.location.origin,
+		channel: "web",
 		...globals.activePaymentInfo
 	};
 	request.endpoint = common.endpoints.payments;
@@ -164,6 +195,36 @@ function sendPayment() {
 function handlePaymentsCallback(data) {
 	common.output(data.request, "/payments request", data.endpoint);
 	common.output(data.response, "/payments response");
+
+	// unmount components
+	for (let component of globals.mountedComponents) {
+		try {
+			component.unmount();
+		}
+		catch(e) {
+			console.log(component);
+			console.log(e);
+		}
+	}
+	if (document.querySelector("#componentHolder") != null) {
+		document.querySelector("#componentHolder").remove();
+	}
+
+	// handle follow up actions
+	if (data.response.hasOwnProperty("action")) {
+		common.output('globals.checkout.createFromAction(data.response.action).mount("#detailsHolder");', "Handling action from API response");
+		globals.checkout.createFromAction(data.response.action).mount("#detailsHolder");
+	}
+}
+
+// call Adyen /payments/details endpoint
+function callPaymentsDetails(data) {
+   const request = {
+      ...data,
+      endpoint: common.endpoints.paymentsDetails
+   };
+
+   common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
 }
 
 </script>
