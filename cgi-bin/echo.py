@@ -1,4 +1,4 @@
-#!/usr/local/adyen/python3/bin/python3
+#!/usr/local/adyen/python/bin/python3
 """
 echos POST params back to client as JSON object
 """

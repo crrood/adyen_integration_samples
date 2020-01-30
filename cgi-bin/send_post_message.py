@@ -1,4 +1,4 @@
-#!/usr/local/adyen/python3/bin/python3
+#!/usr/local/adyen/python/bin/python3
 """
 handler for callback from issuing bank
 

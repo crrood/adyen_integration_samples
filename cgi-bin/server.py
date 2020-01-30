@@ -1,4 +1,4 @@
-#!/usr/local/adyen/python3/bin/python3
+#!/usr/local/adyen/python/bin/python3
 
 '''
 Server to forward requests to Adyen
