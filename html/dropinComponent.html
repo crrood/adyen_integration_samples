@@ -1,8 +1,8 @@
 <html>
 
 <head>
-   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.js"></script>
-   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.0.0/adyen.css" />
+   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.4.0/adyen.js"></script>
+   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.4.0/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
    </link>
 
@@ -22,8 +22,8 @@
       <h1>Payment info</h1>
       <div class="block">
          <form id="paymentForm" class="client-form">
-            Currency: <input type="text" id="currencyInput" name="currency" value="USD" /><br>
             Amount: <input type="text" id="valueInput" name="value" value="1000" /><br>
+            Currency: <input type="text" id="currencyInput" name="currency" value="USD" /><br>
             CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US" /><br>
             ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB" /><br>
             ShopperReference: <input type="text" id="shopperReferenceInput" name="shopperReference" value="DropinShopper" /><br>
@@ -45,17 +45,6 @@ import * as common from "../js/common.js";
 // object to store global variables
 const globals = {};
 
-// for logging
-globals.componentInitializerOutput = `const sharedConfiguration = {
-   locale: document.querySelector("[name=shopperLocale]").value,
-   originKey: ORIGIN_KEY,
-   environment: "test",
-   paymentMethodsResponse: data.response
-};
-
-// intialize checkout object
-const checkout = new AdyenCheckout(sharedConfiguration);`;
-
 // actions to do on page load
 window.onload = function() {
 
@@ -72,7 +61,10 @@ function getAvailablePaymentMethods(e) {
 
    // build /paymentMethods request
    const request = {
-      currency: globals.currency,
+      amount: {
+        value: document.querySelector("#valueInput").value,
+        currency: globals.currency
+      },
       shopperLocale: document.querySelector("#shopperLocaleInput").value,
       countryCode: document.querySelector("#countryCodeInput").value,
       shopperReference: document.querySelector("#shopperReferenceInput").value,
@@ -96,7 +88,7 @@ function handlePaymentMethodsCallback(data) {
 
    // config options shared between components
    const sharedConfiguration = {
-      locale: document.querySelector("[name=shopperLocale]").value,
+      locale: document.querySelector("#shopperLocaleInput").value,
       originKey: common.ORIGIN_KEY,
       environment: "test",
       paymentMethodsResponse: data.response
@@ -104,8 +96,6 @@ function handlePaymentMethodsCallback(data) {
 
    // intialize checkout object
    const checkout = new AdyenCheckout(sharedConfiguration);
-
-   common.output(globals.componentInitializerOutput, "Initialize Dropin Component");
 
    // initialize dropin component
    globals.dropin = checkout.create("dropin", {
@@ -115,9 +105,31 @@ function handlePaymentMethodsCallback(data) {
         }
       },
       onSubmit: onSubmit,
-      onAdditionalDetails: onAdditionalDetails,
+      onAdditionalDetails: onAdditionalDetails
    })
    .mount("#componentHolder");
+
+   const componentInitializerOutput = `// intialize checkout object
+const checkout = new AdyenCheckout({
+   locale: document.querySelector("#shopperLocaleInput").value,
+   originKey: ORIGIN_KEY,
+   environment: "test",
+   paymentMethodsResponse: data.response
+});
+
+// initialize dropin component
+const dropin = checkout.create("dropin", {
+   paymentMethodsConfiguration: {
+     card: {
+       enableStoreDetails: true
+     }
+   },
+   onSubmit: onSubmit,
+   onAdditionalDetails: onAdditionalDetails
+})
+.mount("#componentHolder");`;
+
+   common.output(componentInitializerOutput, "Initialize Dropin Component");
 }
 
 // callback from component
