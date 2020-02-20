@@ -14,7 +14,17 @@ body.dark {
 	color: #D3D3D3;
 }
 
+body.dark h1, h2, h3, h4, h5 {
+	color: #0ABF53;
+}
+
+body.dark a {
+	color: #D3D3D3;
+	text-
+}
+
 body.index-page {
+	padding: 50px;
 	font-size: 1.2em;
 }
 
