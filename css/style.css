@@ -29,7 +29,8 @@ body.index-page {
 }
 
 ::selection {
-	background: #A7A7A7;
+	color: white;
+	background: #685;
 }
 
 .block {
