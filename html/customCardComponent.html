@@ -1,8 +1,8 @@
 <html>
 
 <head>
-   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.3.0/adyen.js"></script>
-   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.3.0/adyen.css" />
+   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.5.0/adyen.js"></script>
+   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.5.0/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
    </link>
 
@@ -24,15 +24,15 @@
       <div id="customCard-container">
          <label>
             <span>Card number:</span>
-            <span data-cse="encryptedCardNumber"></span>
+            <div class="secured-field" data-cse="encryptedCardNumber"></div>
          </label>
          <label>
             <span>Expiry date:</span>
-            <span data-cse="encryptedExpiryDate"></span>
+            <div class="secured-field" data-cse="encryptedExpiryDate"></div>
          </label>
          <label>
             <span>CVV/CVC:</span>
-            <span data-cse="encryptedSecurityCode"></span>
+            <div class="secured-field" data-cse="encryptedSecurityCode"></div>
          </label>
       </div>
       <br>
@@ -60,7 +60,8 @@ window.onload = function() {
       locale: "en_US",
       originKey: common.ORIGIN_KEY,
       environment: "test",
-      onChange: handleOnChange
+      onChange: handleOnChange,
+      onError: handleOnError
    };
    const checkout = new AdyenCheckout(sharedConfiguration);
 
@@ -86,11 +87,17 @@ window.onload = function() {
 function handleOnChange(state, component) {
    globals.state = state;
    if (state.isValid) {
+     common.output(state, "onChange callback");
       globals.payBtn.disabled = false;
    }
    else {
       globals.payBtn.disabled = true;
    }
+}
+
+function handleOnError(state, component) {
+  console.log("onError");
+  console.log(state);
 }
 
 // send payment info to Adyen

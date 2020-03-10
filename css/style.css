@@ -188,17 +188,26 @@ button:disabled {
 	margin: 10px;
 }
 
+.secured-field {
+	margin-bottom: 5px;
+	padding-left: 5px;
+
+	background: white;
+	width: 250px;
+	height: 30px;
+}
+
   /*****************/
  /* COLUMN LAYOUT */
 /*****************/
 .right-column {
 	position: absolute;
-	width: 50%;
+	width: 49%;
 	top: 0%;
 	left: 50%;
 
+	padding-top: 20px;
 	padding-left: 10px;
-	padding-right: 10px;
 }
 
 .left-column {
