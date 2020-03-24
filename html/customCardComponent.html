@@ -59,9 +59,7 @@ window.onload = function() {
    const sharedConfiguration = {
       locale: "en_US",
       originKey: common.ORIGIN_KEY,
-      environment: "test",
-      onChange: handleOnChange,
-      onError: handleOnError
+      environment: "test"
    };
    const checkout = new AdyenCheckout(sharedConfiguration);
 
@@ -85,6 +83,7 @@ window.onload = function() {
 };
 
 function handleOnChange(state, component) {
+  console.log("onChange");
    globals.state = state;
    if (state.isValid) {
      common.output(state, "onChange callback");

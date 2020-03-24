@@ -1,6 +1,7 @@
 <html>
 
 <head>
+  <meta charset="utf-8">
    <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.4.0/adyen.js"></script>
    <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.4.0/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
@@ -104,8 +105,10 @@ function handlePaymentMethodsCallback(data) {
           enableStoreDetails: true
         }
       },
+      onChange: onChange,
       onSubmit: onSubmit,
-      onAdditionalDetails: onAdditionalDetails
+      onAdditionalDetails: onAdditionalDetails,
+      onError: onError
    })
    .mount("#componentHolder");
 
@@ -153,6 +156,25 @@ function onAdditionalDetails(state, dropin) {
    common.output(state, "onAdditionalDetails callback");
 
    callPaymentsDetails(state.data);
+}
+
+// callback from component
+function onError(error) {
+   console.log("onError");
+   console.log(error);
+
+   common.output(error, "onError callback");
+}
+
+// callback from component
+function onChange(state, dropin) {
+  return; // otherwise this runs on every character entry
+
+   console.log("onChange");
+   console.log(state);
+   console.log(dropin);
+
+   console.log(state, "onChange callback");
 }
 
 // send payment info to Adyen
