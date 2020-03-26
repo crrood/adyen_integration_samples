@@ -85,7 +85,7 @@ class ServerUtils():
             else:
                 return result
         except HTTPError as e:
-            return "{}".format(e)
+            return "{}".format(e.read().decode("utf8"))
 
     def send_response(self,
                       response_text,
