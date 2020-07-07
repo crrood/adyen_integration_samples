@@ -2,8 +2,8 @@
 
 <head>
   <meta charset="utf-8">
-   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.6.1/adyen.js"></script>
-   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.6.1/adyen.css" />
+   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.js"></script>
+   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
    </link>
 
@@ -27,7 +27,7 @@
             Currency: <input type="text" id="currencyInput" name="currency" value="USD" /><br>
             CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US" /><br>
             ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB" /><br>
-            ShopperReference: <input type="text" id="shopperReferenceInput" name="shopperReference" value="DropinShopper" /><br>
+            ShopperReference: <input type="text" id="shopperReferenceInput" name="shopperReference" value="DropinShopper2" /><br>
             <button id="checkoutBtn" class="block">Initialize</button>
          </form>
       </div>
@@ -103,6 +103,18 @@ function handlePaymentMethodsCallback(data) {
       paymentMethodsConfiguration: {
         card: {
           enableStoreDetails: true
+        },
+        applepay: {
+          amount: 1000,
+          currencyCode: "USD",
+          countryCode: "US",
+          configuration: {
+            merchantName: "merchantName",
+            merchantIdentifier: "merchantIdentifier"
+          },
+          onValidateMerchant: (resolve, reject, validationURL) => {
+            resolve("MERCHANTSESSION");
+          }
         }
       },
       onChange: onChange,
@@ -160,10 +172,10 @@ function onAdditionalDetails(state, dropin) {
 
 // callback from component
 function onError(error) {
-   console.log("onError");
-   console.log(error);
-
-   common.output(error, "onError callback");
+   // console.log("onError");
+   // console.log(error);
+   //
+   // common.output(error, "onError callback");
 }
 
 // callback from component
