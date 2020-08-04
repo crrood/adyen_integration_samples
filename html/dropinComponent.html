@@ -201,6 +201,7 @@ function sendPayment(stateData) {
          value: formData.value
       },
       returnUrl: common.RETURN_URL,
+      countryCode: formData.countryCode,
       additionalData: {
           allow3DS2: true
       },
@@ -209,6 +210,22 @@ function sendPayment(stateData) {
       channel: "web"
    };
    request.endpoint = common.endpoints.payments;
+
+   // invoice line items if required
+   if (request.paymentMethod.type.includes("klarna")) {
+     request.lineItems = [
+      {
+         "quantity":"1",
+         "amountExcludingTax":"331",
+         "taxPercentage":"2100",
+         "description":"Shoes",
+         "id":"Item #1",
+         "taxAmount":"69",
+         "amountIncludingTax":"400",
+         "productUrl": "URL_TO_PURCHASED_ITEM",
+         "imageUrl": "URL_TO_PICTURE_OF_PURCHASED_ITEM"
+      }];
+   }
 
    common.AJAXPost(common.SERVER_URL, handlePaymentsCallback, request);
 }
