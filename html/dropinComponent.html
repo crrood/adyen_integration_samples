@@ -105,6 +105,9 @@ function handlePaymentMethodsCallback(data) {
         card: {
           enableStoreDetails: true
         },
+        paypal: {
+          intent: "authorize"
+        },
         applepay: {
           amount: 1000,
           currencyCode: "USD",

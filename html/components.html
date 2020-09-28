@@ -23,8 +23,8 @@
 		<div class="block">
 			<form id="paymentForm" class="client-form" >
 				Amount: <input type="text" id="valueInput" name="value" value="1000"/><br>
-				Currency: <input type="text" id="currencyInput" name="currency" value="EUR"/><br>
-				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="NL"/><br>
+				Currency: <input type="text" id="currencyInput" name="currency" value="USD"/><br>
+				CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US"/><br>
 				ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB"/><br>
 				<button id="checkoutBtn" class="block">Initialize</button>
 			</form>
@@ -112,9 +112,16 @@ function handlePaymentMethodsCallback(data) {
 		console.log("adding component for " + pm.type);
 		let pmType = pm.type;
 
-		// special case for cards
+		const configuration = {
+			details: pm.details
+		};
+
+		// special logic for PM's
 		if (pmType === "scheme") {
 			pmType = "card";
+		}
+		else if (pmType === "paypal") {
+			configuration.intent = "authorize";
 		}
 
 		// methods which don't have a component yet will throw an error
