@@ -258,16 +258,13 @@ body.dark .right-column {
 	height: 300px;
 }
 
-  /*****************/
- /* CHECKOUT PAGE */
-/*****************/
-.checkout-iframe {
+  /***************/
+ /* DROPIN PAGE */
+/***************/
+.dropin-iframe {
 	border: 1px black dashed;
-	width: 80%;
-	height: 80%;
-	text-align: center;
-
-	animation-duration: 2s;
+	width: 100%;
+	height: 100%;
 }
 
 .checkout {

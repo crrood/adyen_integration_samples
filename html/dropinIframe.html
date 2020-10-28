@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
    <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.js"></script>
-   <script type="text/javascript" src="../js/common_nomod.js"></script>
    <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
    </link>
@@ -14,21 +13,40 @@
    <title>Drop-in Component</title>
 </head>
 
-<body class="dark">
-   <div class="left-column">
-      <h1>Network activity</h1>
-      <div id="output"></div>
-   </div>
+<body>
+    <h1>Payment info</h1>
+    <div class="block">
+       <form id="paymentForm" class="client-form">
+          Amount: <input type="text" id="valueInput" name="value" value="1000" /><br>
+          Currency: <input type="text" id="currencyInput" name="currency" value="USD" /><br>
+          CountryCode: <input type="text" id="countryCodeInput" name="countryCode" value="US" /><br>
+          ShopperLocale: <input type="text" id="shopperLocaleInput" name="shopperLocale" value="en_GB" /><br>
+          ShopperReference: <input type="text" id="shopperReferenceInput" name="shopperReference" value="DropinShopper2" /><br>
+          Store payment method: <input type="checkbox" id="storePaymentMethodInput" name="storePaymentMethod" /><br>
+          <button id="checkoutBtn" class="block">Initialize</button>
+       </form>
+    </div>
 
-   <div class="right-column" style="height: 100%">
-      <iframe class="dropin-iframe" src="dropinIframe.html" id="dropinIframe"></iframe>
-   </div>
+    <div id="componentHolder" />
+
+    <br>
+    <button id="payBtn" class="hidden" disabled=true>Pay</button>
 </body>
 
-<script>
+<script type="module">
+
+   // js utilities
+import * as common from "../js/common.js";
 
 // object to store global variables
 const globals = {};
+
+// actions to do on page load
+window.onload = function() {
+
+   // event listener for initialize button
+   document.getElementById("checkoutBtn").addEventListener("click", getAvailablePaymentMethods);
+};
 
 // get data from form and make call to paymentMethods
 function getAvailablePaymentMethods(e) {
@@ -60,9 +78,8 @@ function getAvailablePaymentMethods(e) {
 
 // display available components
 function handlePaymentMethodsCallback(data) {
-
-   common.output(data.request, "/paymentMethods request", data.endpoint);
-   common.output(data.response, "/paymentMethods response");
+  console.log(parent);
+  parent.handlePaymentMethodsCallback(data);
 
    // config options shared between components
    const sharedConfiguration = {
@@ -80,9 +97,6 @@ function handlePaymentMethodsCallback(data) {
       paymentMethodsConfiguration: {
         card: {
           enableStoreDetails: true
-        },
-        paypal: {
-          intent: "authorize"
         },
         applepay: {
           amount: 1000,
@@ -103,28 +117,6 @@ function handlePaymentMethodsCallback(data) {
       onError: onError
    })
    .mount("#componentHolder");
-
-   const componentInitializerOutput = `// intialize checkout object
-const checkout = new AdyenCheckout({
-   locale: document.querySelector("#shopperLocaleInput").value,
-   originKey: ORIGIN_KEY,
-   environment: "test",
-   paymentMethodsResponse: data.response
-});
-
-// initialize dropin component
-const dropin = checkout.create("dropin", {
-   paymentMethodsConfiguration: {
-     card: {
-       enableStoreDetails: true
-     }
-   },
-   onSubmit: onSubmit,
-   onAdditionalDetails: onAdditionalDetails
-})
-.mount("#componentHolder");`;
-
-   common.output(componentInitializerOutput, "Initialize Dropin Component");
 }
 
 // callback from component
