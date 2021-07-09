@@ -7,7 +7,11 @@
 	<link rel="stylesheet"
 	      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css">
 	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-	<script src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.17.0/adyen.js"></script>
+
+	<script src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/4.7.0/adyen.js"></script>
+	<link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/{VERSION}/adyen.css"
+				integrity="sha384-oT6lIQpTr+nOu+yFBPn8mSMkNQID9wuEoTw8lmg2bcrFoDu/Ae8DhJVj+T5cUmsM"
+				crossorigin="anonymous">
 </head>
 
 <body class="dark">
@@ -60,7 +64,7 @@
 				</div>
 			</div>
 
-			<div id="sdkContainer" class="hidden challenge-iframe"></div>
+			<div id="sdkContainer" class="display-none challenge-iframe"></div>
 		</div>
 	</div>
 
@@ -117,9 +121,12 @@ window.onload = () => {
 	globals.challengePerformed = false;
 
 	// Adyen 3ds2 component
-	/* global AdyenCheckout */
 	globals.checkout = new AdyenCheckout({
-		originKey: common.ORIGIN_KEY
+		originKey: common.ORIGIN_KEY,
+		clientKey: "test_TQ4Y6K5KXFHLFOXVJECMEVJOQM2UEZMN",
+		environment: "test",
+		// locale: "en_US",
+		onAdditionalDetails: handleOnAdditionalDetails
 	});
 }
 
@@ -221,18 +228,18 @@ function paymentsCallback(data) {
 	if (response.resultCode === "IdentifyShopper") {
 
 		// save paymentData
-		globals.paymentData = response.paymentData;
+		globals.paymentData = response.action.paymentData;
 
 		// execute the fingerprint via the SDK
-		doFingerprint(response.authentication["threeds2.fingerprintToken"]);
-		common.output(common.stringifyFunction(doFingerprint), "Javascript - Fingerprint request to component");
+		authenticateWithSDK(response.action);
+		common.output(common.stringifyFunction(authenticateWithSDK), "Javascript - Authentication request to component");
 
 		globals.flowchart.setActive("FingerprintDevice");
 	}
 	else if (response.resultCode === "ChallengeShopper") {
 
 		// save paymentData
-		globals.paymentData = response.paymentData;
+		globals.paymentData = response.action.paymentData;
 
 		common.output(common.stringifyFunction(doChallenge), "Javascript - Challenge request to component");
 
@@ -272,8 +279,7 @@ function paymentsCallback(data) {
 // make a call to /payments/details
 function callPaymentsDetails(responseData) {
 	const request = {
-		details: responseData.data.details,
-		paymentData: globals.paymentData,
+		...responseData.data,
 		threeDSAuthenticationOnly: globals.authenticationOnly
 	};
 
@@ -294,7 +300,6 @@ function authoriseWithMPIData(threeDS2Result) {
 		mpiData:{
 			cavv: threeDS2Result.authenticationValue,
 			eci: threeDS2Result.eci,
-			dsTransId: threeDS2Result.dsTransID,
 			directoryResponse: globals.challengePerformed ? "C" : "Y",
 			authenticationResponse: threeDS2Result.transStatus,
 			threeDSVersion: threeDS2Result.messageVersion
@@ -310,37 +315,25 @@ function authoriseWithMPIData(threeDS2Result) {
 //		CLIENT METHODS		//
 //////////////////////////////
 
-function doFingerprint(fingerprintToken) {
-	globals.checkout
-				.create("threeDS2DeviceFingerprint", {
-						fingerprintToken: fingerprintToken,
-						onComplete: fingerprintData => {
-							common.output(JSON.stringify(fingerprintData), "Javascript - Fingerprint result");
-							callPaymentsDetails(fingerprintData);
-						},
-						onError: () => {
-							common.output("Verification request to component failed", "Fingerprint response from component");
-						}
-				})
-				.mount("#sdkContainer");
+// complete authentication via SDK
+
+// note that the intermediate /payments/details call between
+// fingerprint and challenge is performed directly from the SDK to Adyen
+function authenticateWithSDK(action) {
+	// Optional configuration for the challenge window size
+	const threeDSConfiguration = {
+	    size: "05"
+	}
+
+	globals.checkout.createFromAction(action, threeDSConfiguration)
+	.mount("#sdkContainer");
+
+	common.unhide("#sdkContainer");
 }
 
-// perform challenge via SDK
-function doChallenge(challengeToken) {
-	globals.checkout
-		.create('threeDS2Challenge', {
-			challengeToken: challengeToken,
-			onComplete: challengeData => {
-				common.output(challengeData, "Javascript - Challenge result");
-				callPaymentsDetails(challengeData);
-				common.hide("#sdkContainer");
-			},
-			onError: () => {
-				common.output("Verification request to component failed", "Fingerprint response from component");
-			},
-			size: '05'
-		})
-		.mount('#sdkContainer');
+// called after authentication is completed
+function handleOnAdditionalDetails(state, component) {
+	callPaymentsDetails(state);
 }
 
 </script>

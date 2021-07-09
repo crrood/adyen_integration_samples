@@ -60,7 +60,7 @@
 				</div>
 			</div>
 
-			<div id="sdkContainer" class="hidden challenge-iframe"></div>
+			<div id="sdkContainer" class="display-none challenge-iframe"></div>
 		</div>
 	</div>
 
@@ -237,7 +237,7 @@ function paymentsCallback(data) {
 		common.output(common.stringifyFunction(doChallenge), "Javascript - Challenge request to component");
 
 		// show challenge iframe
-		document.querySelector("#sdkContainer").classList.remove("hidden");
+		common.unhide("#sdkContainer");
 
 		globals.challengePerformed = true;
 		globals.flowchart.setActive("ChallengeShopper");
