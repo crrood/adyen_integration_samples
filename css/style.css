@@ -254,8 +254,10 @@ body.dark .right-column {
 
 .challenge-iframe {
 	border: 2px black solid;
-	width: 400px;
-	height: 300px;
+	width: 375px;
+	height: 400px;
+
+	overflow: hidden;
 }
 
   /*****************/
