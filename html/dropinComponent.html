@@ -2,8 +2,8 @@
 
 <head>
   <meta charset="utf-8">
-   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.js"></script>
-   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.9.4/adyen.css" />
+   <script type="text/javascript" src="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.17.0/adyen.js"></script>
+   <link rel="stylesheet" href="https://checkoutshopper-test.adyen.com/checkoutshopper/sdk/3.17.0/adyen.css" />
    <link rel="stylesheet" type="text/css" href="../css/style.css">
    </link>
 
@@ -103,7 +103,11 @@ function handlePaymentMethodsCallback(data) {
    globals.dropin = checkout.create("dropin", {
       paymentMethodsConfiguration: {
         card: {
-          enableStoreDetails: true
+          hideCVC: true,
+          enableStoreDetails: true,
+          onBinValue: onBinValue,
+          onBrand: onBrand,
+          onFieldValid: onFieldValid
         },
         paypal: {
           intent: "authorize"
@@ -121,10 +125,12 @@ function handlePaymentMethodsCallback(data) {
           }
         }
       },
+      clientKey: "test_TQ4Y6K5KXFHLFOXVJECMEVJOQM2UEZMN",
       onChange: onChange,
       onSubmit: onSubmit,
       onAdditionalDetails: onAdditionalDetails,
-      onError: onError
+      onError: onError,
+      onComplete: onComplete
    })
    .mount("#componentHolder");
 
@@ -189,6 +195,28 @@ function onChange(state, dropin) {
    // console.log(dropin);
    //
    // console.log(state, "onChange callback");
+}
+
+// callback from componenet
+function onBinValue(data) {
+  console.log("onBinValue");
+  console.log(data);
+}
+
+// callback from componenet
+function onBrand(state) {
+  console.log("onBrand");
+  console.log(state);
+}
+
+function onFieldValid(state) {
+  console.log("onFieldValid");
+  console.log(state);
+}
+
+function onComplete(state) {
+  console.log("onComplete");
+  console.log(state);
 }
 
 // send payment info to Adyen
