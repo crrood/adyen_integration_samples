@@ -74,9 +74,9 @@
 
 <script type="module">
 
-//////////////////////////////
-//		INITIALIZATION		//
-//////////////////////////////
+  //////////////////////
+ //  INITIALIZATION  //
+//////////////////////
 
 // custom utilities
 import * as common from "../js/common.js";
@@ -104,7 +104,7 @@ window.onload = () => {
 				"Frictionless",
 				"Challenge Shopper",
 				[
-					"Authorise With Token",
+					"Authorised",
 					"Retrieve MPI Data",
 					[
 						"Authorise Via Adyen",
@@ -130,9 +130,9 @@ window.onload = () => {
 	});
 }
 
-//////////////////////////
-//		API METHODS		//
-//////////////////////////
+  ///////////////////
+ //  API METHODS  //
+///////////////////
 
 // send form data to server
 function initialPaymentsCall() {
@@ -225,31 +225,24 @@ function paymentsCallback(data) {
 	common.output(request, "HTTP - Request to " + shortedEndpoint, data.endpoint);
 	common.output(response, "HTTP - Response to " + shortedEndpoint + " call");
 
-	if (response.resultCode === "IdentifyShopper") {
+	// SDK will perform authentication
+	if (response.action) {
 
-		// save paymentData
-		globals.paymentData = response.action.paymentData;
+		if (response.action.type === "threeDS2") {
+			// execute the fingerprint via the SDK
+			authenticateWithSDK(response.action);
+			common.output(common.stringifyFunction(authenticateWithSDK), "Javascript - Authentication request to component");
 
-		// execute the fingerprint via the SDK
-		authenticateWithSDK(response.action);
-		common.output(common.stringifyFunction(authenticateWithSDK), "Javascript - Authentication request to component");
-
-		globals.flowchart.setActive("FingerprintDevice");
+			globals.challengePerformed = true;
+			globals.flowchart.setActive("FingerprintDevice");
+			common.unhide("#sdkContainer");
+		}
+		else if (response.action.type === "redirect") {
+			// technically you should handle 3ds1 here
+			// but that is demonstrated via 3DSecure.html
+		}
 	}
-	else if (response.resultCode === "ChallengeShopper") {
-
-		// save paymentData
-		globals.paymentData = response.action.paymentData;
-
-		common.output(common.stringifyFunction(doChallenge), "Javascript - Challenge request to component");
-
-		// show challenge iframe
-		document.querySelector("#sdkContainer").classList.remove("hidden");
-
-		globals.challengePerformed = true;
-		globals.flowchart.setActive("ChallengeShopper");
-		doChallenge(response.authentication['threeds2.challengeToken']);
-	}
+	// Authentication Only flow
 	else if (response.resultCode === "AuthenticationFinished") {
 
 		// update flowchart
@@ -259,12 +252,13 @@ function paymentsCallback(data) {
 		// authorise with MPI data
 		authoriseWithMPIData(response.threeDS2Result);
 	}
+	// transaction finished
 	else if (response.resultCode === "Authorised") {
 
 		// update flowchart state
 		if (globals.challengePerformed) {
-			if (Object.prototype.hasOwnProperty.call(request, "paymentData")) {
-				globals.flowchart.setActive("AuthoriseWithToken");
+			if (Object.prototype.hasOwnProperty.call(request, "details")) {
+				globals.flowchart.setActive("Authorised");
 			}
 			else {
 				globals.flowchart.setActive("AuthoriseViaAdyen");
@@ -277,12 +271,12 @@ function paymentsCallback(data) {
 }
 
 // make a call to /payments/details
+// following finished authentication
 function callPaymentsDetails(responseData) {
 	const request = {
 		...responseData.data,
 		threeDSAuthenticationOnly: globals.authenticationOnly
 	};
-
 	request.endpoint = common.endpoints.paymentsDetails;
 
 	common.AJAXPost(common.SERVER_URL, paymentsCallback, request);
@@ -303,6 +297,9 @@ function authoriseWithMPIData(threeDS2Result) {
 			directoryResponse: globals.challengePerformed ? "C" : "Y",
 			authenticationResponse: threeDS2Result.transStatus,
 			threeDSVersion: threeDS2Result.messageVersion
+		},
+		paymentMethod: {
+			...globals.paymentMethodData
 		}
 	};
 	Object.assign(request, globals.paymentMethodData);
@@ -311,15 +308,16 @@ function authoriseWithMPIData(threeDS2Result) {
 	common.AJAXPost(common.SERVER_URL, paymentsCallback, request);
 }
 
-//////////////////////////////
-//		CLIENT METHODS		//
-//////////////////////////////
+  //////////////////////
+ //  CLIENT METHODS  //
+//////////////////////
 
 // complete authentication via SDK
 
 // note that the intermediate /payments/details call between
 // fingerprint and challenge is performed directly from the SDK to Adyen
 function authenticateWithSDK(action) {
+
 	// Optional configuration for the challenge window size
 	const threeDSConfiguration = {
 	    size: "05"
@@ -327,8 +325,6 @@ function authenticateWithSDK(action) {
 
 	globals.checkout.createFromAction(action, threeDSConfiguration)
 	.mount("#sdkContainer");
-
-	common.unhide("#sdkContainer");
 }
 
 // called after authentication is completed
