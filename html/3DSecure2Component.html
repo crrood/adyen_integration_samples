@@ -97,20 +97,17 @@ window.onload = () => {
 
 	// add dynamic flowchart
 	let tree = [
-		"First /payments Call",
+		"Initial /payments Call",
 		[
-			"Fingerprint Device",
+			"Frictionless",
+			"Authenticate",
 			[
-				"Frictionless",
-				"Challenge Shopper",
+				"Authorised",
+				"Authentication Only",
 				[
-					"Authorised",
-					"Retrieve MPI Data",
-					[
-						"Authorise Via Adyen",
-						"Authorise Elsewhere"
-					],
-				]
+					"Authorise With Adyen",
+					"Authorise Elsewhere"
+				],
 			]
 		]
 	];
@@ -202,7 +199,7 @@ function initialPaymentsCall() {
 	}
 
 	// update flowchart state
-	globals.flowchart.setActive("First/paymentsCall");
+	globals.flowchart.setActive("Initial/paymentsCall");
 
 	// send to server
 	request.endpoint = common.endpoints.payments;
@@ -234,7 +231,7 @@ function paymentsCallback(data) {
 			common.output(common.stringifyFunction(authenticateWithSDK), "Javascript - Authentication request to component");
 
 			globals.challengePerformed = true;
-			globals.flowchart.setActive("FingerprintDevice");
+			globals.flowchart.setActive("Authenticate");
 			common.unhide("#sdkContainer");
 		}
 		else if (response.action.type === "redirect") {
@@ -246,7 +243,7 @@ function paymentsCallback(data) {
 	else if (response.resultCode === "AuthenticationFinished") {
 
 		// update flowchart
-		const flowchartState = globals.challengePerformed ? "RetrieveMPIData" : "Frictionless";
+		const flowchartState = globals.challengePerformed ? "AuthenticationOnly" : "Frictionless";
 		globals.flowchart.setActive(flowchartState);
 
 		// authorise with MPI data
@@ -261,7 +258,7 @@ function paymentsCallback(data) {
 				globals.flowchart.setActive("Authorised");
 			}
 			else {
-				globals.flowchart.setActive("AuthoriseViaAdyen");
+				globals.flowchart.setActive("AuthoriseWithAdyen");
 			}
 		}
 		else {
