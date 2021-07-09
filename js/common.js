@@ -19,7 +19,9 @@ const PAL_VERSION = "v64";
 export const endpoints = {
 	"paymentMethods": "https://checkout-test.adyen.com/" + CHECKOUT_VERSION + "/paymentMethods",
 	"paymentsDetails": "https://checkout-test.adyen.com/" + CHECKOUT_VERSION + "/payments/details",
+	"paymentsDetailsV66": "https://checkout-test.adyen.com/" + "v66" + "/payments/details",
 	"payments": "https://checkout-test.adyen.com/" + CHECKOUT_VERSION + "/payments",
+	"paymentsV66": "https://checkout-test.adyen.com/" + "v66" + "/payments",
 	"authorise": "https://pal-test.adyen.com/pal/servlet/Payment/" + PAL_VERSION + "/authorise",
 	"authorise3d": "https://pal-test.adyen.com/pal/servlet/Payment/" + PAL_VERSION + "/authorise3d",
 	"authorise3ds2": "https://pal-test.adyen.com/pal/servlet/Payment/" + PAL_VERSION + "/authorise3ds2"
