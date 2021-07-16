@@ -158,7 +158,7 @@ function initialPaymentsRequest() {
 	}
 
 	// send to server
-	request.endpoint = common.endpoints.payments;
+	request.endpoint = common.endpoints.paymentsV66;
 	common.AJAXPost(common.SERVER_URL, initialPaymentsResponse, request);
 
 	// prevent default button behavior

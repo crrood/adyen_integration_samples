@@ -78,6 +78,8 @@ window.onload = function() {
    // initialize custom card component
    globals.customCardComponent = checkout.create("securedfields", {
       // optional params go here
+      onError: handleOnError,
+      onChange: handleOnChange
    })
    .mount("#customCard-container");
 };
@@ -92,6 +94,7 @@ function handleOnChange(state, component) {
    else {
       globals.payBtn.disabled = true;
    }
+   console.log(state);
 }
 
 function handleOnError(state, component) {

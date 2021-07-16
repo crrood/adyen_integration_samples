@@ -15,7 +15,7 @@
 		<h1>Network activity</h1>
 		<div id="output"></div>
 	</div>
-	
+
 	<div class="right-column">
 		<div class="flowchart-container">
 			<figure class="flowchart">
@@ -218,6 +218,15 @@ function callAuthorise3ds2(threeDS2Data) {
 		merchantAccount: "", // filled in by server
 		threeDS2Token: globals.threeDS2Token,
 		...threeDS2Data
+	}
+
+	if (request.threeDS2RequestData) {
+		request.threeDS2RequestData.authenticationOnly = globals.authenticationOnly;
+	}
+	else {
+		request.threeDS2RequestData = {
+			authenticationOnly: globals.authenticationOnly
+		}
 	}
 
 	request.endpoint = common.endpoints.authorise3ds2;

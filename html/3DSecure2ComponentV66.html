@@ -294,14 +294,13 @@ function authoriseWithMPIData(threeDS2Result) {
 		mpiData:{
 			cavv: threeDS2Result.authenticationValue,
 			eci: threeDS2Result.eci,
-			dsTransId: threeDS2Result.dsTransID,
 			directoryResponse: globals.challengePerformed ? "C" : "Y",
 			authenticationResponse: threeDS2Result.transStatus,
 			threeDSVersion: threeDS2Result.messageVersion
 		}
 	};
 	Object.assign(request, globals.paymentMethodData);
-	request.endpoint = common.endpoints.payments;
+	request.endpoint = common.endpoints.paymentsV66;
 
 	common.AJAXPost(common.SERVER_URL, paymentsCallback, request);
 }
